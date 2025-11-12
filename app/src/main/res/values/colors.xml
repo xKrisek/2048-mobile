@@ -3,4 +3,6 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="lightlightgray">#DEDEDE</color>
+    <color name="grid_background">#b59b86</color>
+    <color name="tile_color">#e3bfa1</color>
 </resources>
