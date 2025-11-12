@@ -80,8 +80,8 @@
             android:orientation="horizontal"></LinearLayout>
         <GridLayout
             android:layout_marginTop="20dp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="336dp"
+            android:layout_height="336dp"
             android:columnCount="4"
             android:rowCount="4"
             android:padding="2dp"
@@ -94,8 +94,9 @@
                 android:gravity="center"
                 android:text="0"
                 android:textSize="24sp"
-                android:background="@color/white"
                 android:layout_margin="2dp"
+                android:background="@drawable/rounded_corners"
+                android:backgroundTint="@color/white"
                 />
             <TextView
                 android:layout_width="80dp"
@@ -104,8 +105,8 @@
                 android:gravity="center"
                 android:text="0"
                 android:textSize="24sp"
-                android:background="@color/white"
-                android:layout_margin="2dp"/>
+                android:layout_margin="2dp"
+                android:background="@drawable/rounded_corners"/>
             <TextView
                 android:layout_width="80dp"
                 android:layout_height="80dp"
@@ -113,8 +114,8 @@
                 android:gravity="center"
                 android:text="0"
                 android:textSize="24sp"
-                android:background="@color/white"
-                android:layout_margin="2dp"/>
+                android:layout_margin="2dp"
+                android:background="@drawable/rounded_corners"/>
             <TextView
                 android:layout_width="80dp"
                 android:layout_height="80dp"
