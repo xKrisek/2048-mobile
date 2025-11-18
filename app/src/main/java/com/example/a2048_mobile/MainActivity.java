@@ -5,6 +5,8 @@ import static java.lang.Thread.sleep;
 import android.content.Context;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
+import android.util.Log;
+import android.view.MotionEvent;
 import android.widget.GridLayout;
 import android.widget.TextView;
 
@@ -20,6 +22,7 @@ public class MainActivity extends AppCompatActivity {
     GridLayout game_grid;
 
     @Override
+
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
@@ -48,9 +51,32 @@ public class MainActivity extends AppCompatActivity {
 //            throw new RuntimeException(e);
 //        }
 //        game_grid.removeAllViews();
+
     }
 
-    private void generate_2048_block(Context context, TextView blockTemplate) {
+    public boolean onTouchEvent(MotionEvent event) {
+        switch (event.getAction()) {
+            case (MotionEvent.ACTION_DOWN):
+                //eoeo
+                return true;
+            case (MotionEvent.ACTION_MOVE):
+                //eoeo1
+                return true;
+            case (MotionEvent.ACTION_UP):
+                //eoeo2
+                return true;
+            case (MotionEvent.ACTION_CANCEL):
+                //eoeo3
+                return true;
+            case (MotionEvent.ACTION_OUTSIDE):
+                //eoeo4
+                return true;
+            default:
+                return super.onTouchEvent(event);
+        }
+    }
+
+    public void generate_2048_block(Context context, TextView blockTemplate) {
         GridLayout grid = findViewById(R.id.game_grid);
 
         TextView block = new TextView(context);
