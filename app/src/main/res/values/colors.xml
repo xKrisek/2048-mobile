@@ -5,4 +5,6 @@
     <color name="lightlightgray">#DEDEDE</color>
     <color name="grid_background">#b59b86</color>
     <color name="tile_color">#e3bfa1</color>
+    <color name="title_color">#555555</color>
+    <color name="transparent">#00000000</color>
 </resources>

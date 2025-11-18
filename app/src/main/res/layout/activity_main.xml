@@ -5,7 +5,8 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    tools:context=".MainActivity"
+    android:background="@color/white">
 
     <LinearLayout
         android:layout_width="0dp"
@@ -27,6 +28,21 @@
             android:gravity="center"
             android:text="0"
             android:textSize="24sp"
+            android:textColor="@color/black"
+            android:visibility="gone"
+            android:textStyle="bold"/>
+
+        <TextView
+            android:id="@+id/block_none_template"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_gravity="start"
+            android:layout_margin="6dp"
+            android:background="@drawable/rounded_corners"
+            android:backgroundTint="@color/transparent"
+            android:gravity="center"
+            android:textSize="24sp"
+            android:textColor="@color/transparent"
             android:visibility="gone"/>
 
         <LinearLayout
@@ -43,7 +59,8 @@
                 android:text="2048"
                 android:textAlignment="center"
                 android:textSize="48sp"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:textColor="@color/title_color"/>
 
             <LinearLayout
                 android:layout_width="0dp"
@@ -64,13 +81,15 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="POINTS"
-                        android:textStyle="bold" />
+                        android:textStyle="bold"
+                        android:textColor="@color/title_color"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="0"
-                        android:textStyle="bold" />
+                        android:textStyle="bold"
+                        android:textColor="@color/title_color"/>
                 </LinearLayout>
 
                 <LinearLayout
@@ -84,13 +103,15 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="RECORD"
-                        android:textStyle="bold" />
+                        android:textStyle="bold"
+                        android:textColor="@color/title_color"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="0"
-                        android:textStyle="bold" />
+                        android:textStyle="bold"
+                        android:textColor="@color/title_color"/>
                 </LinearLayout>
             </LinearLayout>
 
@@ -100,7 +121,7 @@
             android:id="@+id/game_grid"
             android:layout_width="380dp"
             android:layout_height="380dp"
-            android:layout_marginTop="20dp"
+            android:layout_margin="30dp"
             android:background="@drawable/rounded_corners"
             android:backgroundTint="@color/grid_background"
             android:columnCount="4"

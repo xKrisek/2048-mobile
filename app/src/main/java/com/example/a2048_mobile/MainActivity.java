@@ -1,7 +1,10 @@
 package com.example.a2048_mobile;
 
+import static java.lang.Thread.sleep;
+
 import android.content.Context;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.widget.GridLayout;
 import android.widget.TextView;
 
@@ -13,7 +16,7 @@ import androidx.core.view.WindowInsetsCompat;
 
 public class MainActivity extends AppCompatActivity {
 
-    TextView blockTemplate;
+    TextView blockTemplate, blockNoneTemplate;
     GridLayout game_grid;
 
     @Override
@@ -28,23 +31,26 @@ public class MainActivity extends AppCompatActivity {
         });
 
         blockTemplate = findViewById(R.id.block_template);
+        blockNoneTemplate = findViewById(R.id.block_none_template);
 
+        game_grid = findViewById(R.id.game_grid);
 
-//            <TextView
-//        android:layout_width="80dp"
-//        android:layout_height="80dp"
-//        android:layout_gravity="center"
-//        android:gravity="center"
-//        android:text="0"
-//        android:textSize="24sp"
-//        android:background="@color/white"
-//        android:layout_margin="2dp"/>
-        for (int i = 0; i < 4; i++){
-            generate_2048_block(this);
+        for (int i = 0; i < 3; i++){
+            generate_2048_block(this, blockNoneTemplate);
+            generate_2048_block(this, blockNoneTemplate);
+            generate_2048_block(this, blockTemplate);
+            generate_2048_block(this, blockNoneTemplate);
+            generate_2048_block(this, blockTemplate);
         }
+//        try {
+//            sleep(2000);
+//        } catch (InterruptedException e) {
+//            throw new RuntimeException(e);
+//        }
+//        game_grid.removeAllViews();
     }
 
-    private void generate_2048_block(Context context) {
+    private void generate_2048_block(Context context, TextView blockTemplate) {
         GridLayout grid = findViewById(R.id.game_grid);
 
         TextView block = new TextView(context);
@@ -67,13 +73,12 @@ public class MainActivity extends AppCompatActivity {
         block.setLayoutParams(newLp);
 
         block.setGravity(blockTemplate.getGravity());
-        block.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 24); // z jednostką
+        block.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 36);
         block.setBackground(blockTemplate.getBackground());
-        try {
-            block.setTextColor(blockTemplate.getTextColors().getDefaultColor());
-        } catch (Exception ignored) {}
+        block.setTextColor(blockTemplate.getTextColors().getDefaultColor());
+        block.setTypeface(blockTemplate.getTypeface(), blockTemplate.getTypeface().getStyle());
 
-        int number = (Math.random() < 0.6) ? 2 : 4;
+        int number = (Math.random() < 0.8) ? 2 : 4;
         block.setText(String.valueOf(number));
 
         grid.addView(block);
