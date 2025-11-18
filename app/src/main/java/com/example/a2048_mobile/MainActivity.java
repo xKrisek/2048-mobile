@@ -19,6 +19,8 @@ import androidx.core.view.WindowInsetsCompat;
 
 public class MainActivity extends AppCompatActivity {
 
+    int[][] game_board = {{0,0,0,0},{0,0,0,0},{0,0,0,0},{0,0,0,0}};
+
     TextView blockTemplate, blockNoneTemplate;
     GridLayout game_grid;
 
@@ -92,6 +94,27 @@ public class MainActivity extends AppCompatActivity {
             } catch (Exception ignored) {}
             return false;
         }
+    }
+
+    private void generateRandomNumber(Context context){
+        int random_number = (Math.random() < 0.8) ? 2 : 4;
+
+        int random_x_max = game_board.length - 1;
+        int random_y_max = game_board[0].length - 1;
+        int random_x_min = 0;
+        int random_y_min = 0;
+
+        int range_x = random_x_max - random_x_min + 1;
+        int range_y = random_y_max - random_y_min + 1;
+
+        int random_x;
+        int random_y;
+
+        do{
+            random_x = (int)(Math.random() * range_x) + random_x_min;
+            random_y = (int)(Math.random() * range_y) + random_y_min;
+        } while(game_board[random_x][random_y] != 0);
+
     }
 
     private void onSwipeLeft() {
