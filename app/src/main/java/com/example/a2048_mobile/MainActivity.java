@@ -10,6 +10,7 @@ import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.widget.GridLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -17,12 +18,19 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+
 public class MainActivity extends AppCompatActivity {
 
     int[][] game_board = {{0,0,0,0},{0,0,0,0},{0,0,0,0},{0,0,0,0}};
 
+    boolean changed = false;
     TextView blockTemplate, blockNoneTemplate;
     GridLayout game_grid;
+
+    Context context;
 
     private static final int SWIPE_THRESHOLD = 100;
     private static final int SWIPE_VELOCITY_THRESHOLD = 100;
@@ -41,18 +49,20 @@ public class MainActivity extends AppCompatActivity {
 
         blockTemplate = findViewById(R.id.block_template);
         blockNoneTemplate = findViewById(R.id.block_none_template);
+        context = this;
 
         game_grid = findViewById(R.id.game_grid);
         GestureDetector gestureDetector = new GestureDetector(this, new SwipeGestureListener());
         game_grid.setOnTouchListener((v, event) -> gestureDetector.onTouchEvent(event));
 
-        for (int i = 0; i < 3; i++){
-            generate_2048_block(this, blockNoneTemplate);
-            generate_2048_block(this, blockNoneTemplate);
-            generate_2048_block(this, blockTemplate);
-            generate_2048_block(this, blockNoneTemplate);
-            generate_2048_block(this, blockTemplate);
+        for (int i = 0; i < 4; i++){
+            generate_2048_block(this, blockTemplate, generateRandomTile());
+            generate_2048_block(this, blockTemplate, generateRandomTile());
+            generate_2048_block(this, blockNoneTemplate, generateRandomTile());
+            generate_2048_block(this, blockNoneTemplate, generateRandomTile());
         }
+        String boardStr = java.util.Arrays.deepToString(game_board);
+        Toast.makeText(context, boardStr, Toast.LENGTH_LONG).show();
 //        try {
 //            sleep(2000);
 //        } catch (InterruptedException e) {
@@ -96,7 +106,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void generateRandomNumber(Context context){
+    private int generateRandomTile(){
         int random_number = (Math.random() < 0.8) ? 2 : 4;
 
         int random_x_max = game_board.length - 1;
@@ -115,11 +125,46 @@ public class MainActivity extends AppCompatActivity {
             random_y = (int)(Math.random() * range_y) + random_y_min;
         } while(game_board[random_x][random_y] != 0);
 
+        game_board[random_x][random_y] = random_number;
+        return random_number;
     }
 
     private void onSwipeLeft() {
-        Log.d("Swipe", "LEFT");
-        // TODO: obsłuż przesunięcie w lewo (np. wywołaj logikę gry)
+        for(int i=0; i<game_board.length; i++){
+            int[] copy_row = game_board[i];
+            List<Integer> compressed_row_list = new ArrayList<Integer>();
+            for (int j : copy_row) {
+                if (j != 0) {
+                    compressed_row_list.add(j);
+                }
+            }
+            while(compressed_row_list.size()<4){
+                compressed_row_list.add(0);
+            }
+            for(int j=0; j<compressed_row_list.size(); j++){
+                if(compressed_row_list.get(i) != 0 && Objects.equals(compressed_row_list.get(i), compressed_row_list.get(i + 1))){
+                    compressed_row_list.set(i, compressed_row_list.get(i)*2);
+                    compressed_row_list.set(i+1, 0);
+                }
+            }
+            for (int j : copy_row) {
+                if (j != 0) {
+                    compressed_row_list.add(j);
+                }
+            }
+            while(compressed_row_list.size()<4){
+                compressed_row_list.add(0);
+            }
+            game_board[i] = compressed_row_list.stream().mapToInt(Integer::intValue).toArray();
+            if(game_board[i] != copy_row) {
+                changed = true;
+            }
+        }
+        updateBoard();
+        String boardStr = java.util.Arrays.deepToString(game_board);
+        Toast.makeText(context, boardStr, Toast.LENGTH_LONG).show();
+//        String boardStr = java.util.Arrays.deepToString(game_board);
+//        Toast.makeText(context, boardStr, Toast.LENGTH_LONG).show();
     }
 
     private void onSwipeRight() {
@@ -134,7 +179,21 @@ public class MainActivity extends AppCompatActivity {
         Log.d("Swipe", "DOWN");
     }
 
-    public void generate_2048_block(Context context, TextView blockTemplate) {
+    public void updateBoard() {
+        game_grid.removeAllViews();
+        for (int i = 0; i < game_board.length; i++) {
+            for (int j = 0; j < game_board[i].length; j++) {
+                int value = game_board[i][j];
+                if (value != 0) {
+                    generate_2048_block(context, blockTemplate, value);
+                } else {
+                    generate_2048_block(context, blockNoneTemplate, value);
+                }
+            }
+        }
+    }
+
+    public void generate_2048_block(Context context, TextView blockTemplate, int value) {
         GridLayout grid = findViewById(R.id.game_grid);
 
         TextView block = new TextView(context);
@@ -161,6 +220,7 @@ public class MainActivity extends AppCompatActivity {
         block.setBackground(blockTemplate.getBackground());
         block.setTextColor(blockTemplate.getTextColors().getDefaultColor());
         block.setTypeface(blockTemplate.getTypeface(), blockTemplate.getTypeface().getStyle());
+        block.setText(String.valueOf(value));
 
         int number = (Math.random() < 0.8) ? 2 : 4;
         block.setText(String.valueOf(number));
