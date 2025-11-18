@@ -6,6 +6,7 @@ import android.content.Context;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.widget.GridLayout;
 import android.widget.TextView;
@@ -20,6 +21,9 @@ public class MainActivity extends AppCompatActivity {
 
     TextView blockTemplate, blockNoneTemplate;
     GridLayout game_grid;
+
+    private static final int SWIPE_THRESHOLD = 100;
+    private static final int SWIPE_VELOCITY_THRESHOLD = 100;
 
     @Override
 
@@ -37,6 +41,8 @@ public class MainActivity extends AppCompatActivity {
         blockNoneTemplate = findViewById(R.id.block_none_template);
 
         game_grid = findViewById(R.id.game_grid);
+        GestureDetector gestureDetector = new GestureDetector(this, new SwipeGestureListener());
+        game_grid.setOnTouchListener((v, event) -> gestureDetector.onTouchEvent(event));
 
         for (int i = 0; i < 3; i++){
             generate_2048_block(this, blockNoneTemplate);
@@ -54,26 +60,56 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public boolean onTouchEvent(MotionEvent event) {
-        switch (event.getAction()) {
-            case (MotionEvent.ACTION_DOWN):
-                //eoeo
-                return true;
-            case (MotionEvent.ACTION_MOVE):
-                //eoeo1
-                return true;
-            case (MotionEvent.ACTION_UP):
-                //eoeo2
-                return true;
-            case (MotionEvent.ACTION_CANCEL):
-                //eoeo3
-                return true;
-            case (MotionEvent.ACTION_OUTSIDE):
-                //eoeo4
-                return true;
-            default:
-                return super.onTouchEvent(event);
+    private class SwipeGestureListener extends GestureDetector.SimpleOnGestureListener {
+        @Override
+        public boolean onDown(MotionEvent e) {
+            return true;
         }
+
+        @Override
+        public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+            float diffX = e2.getX() - e1.getX();
+            float diffY = e2.getY() - e1.getY();
+            try {
+                if (Math.abs(diffX) > Math.abs(diffY)) {
+                    if (Math.abs(diffX) > SWIPE_THRESHOLD && Math.abs(velocityX) > SWIPE_VELOCITY_THRESHOLD) {
+                        if (diffX > 0) {
+                            onSwipeRight();
+                        } else {
+                            onSwipeLeft();
+                        }
+                        return true;
+                    }
+                } else {
+                    if (Math.abs(diffY) > SWIPE_THRESHOLD && Math.abs(velocityY) > SWIPE_VELOCITY_THRESHOLD) {
+                        if (diffY > 0) {
+                            onSwipeDown();
+                        } else {
+                            onSwipeUp();
+                        }
+                        return true;
+                    }
+                }
+            } catch (Exception ignored) {}
+            return false;
+        }
+    }
+
+    private void onSwipeLeft() {
+        Log.d("Swipe", "LEFT");
+        // TODO: obsłuż przesunięcie w lewo (np. wywołaj logikę gry)
+    }
+
+    private void onSwipeRight() {
+        Log.d("Swipe", "RIGHT");
+    }
+
+    private void onSwipeUp() {
+        Log.d("Swipe", "UP");
+    }
+
+    private void onSwipeDown() {
+        Log.d("Swipe", "DOWN");
     }
 
     public void generate_2048_block(Context context, TextView blockTemplate) {
