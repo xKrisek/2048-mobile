@@ -55,20 +55,15 @@ public class MainActivity extends AppCompatActivity {
         GestureDetector gestureDetector = new GestureDetector(this, new SwipeGestureListener());
         game_grid.setOnTouchListener((v, event) -> gestureDetector.onTouchEvent(event));
 
-        for (int i = 0; i < 4; i++){
-            generate_2048_block(this, blockTemplate, generateRandomTile());
-            generate_2048_block(this, blockTemplate, generateRandomTile());
-            generate_2048_block(this, blockNoneTemplate, generateRandomTile());
-            generate_2048_block(this, blockNoneTemplate, generateRandomTile());
+        for (int i = 0; i < 16; i++){
+            generate_2048_block(this, blockNoneTemplate, 0);
         }
+        generateRandomTile();
+        generateRandomTile();
+        updateBoard();
+
         String boardStr = java.util.Arrays.deepToString(game_board);
         Toast.makeText(context, boardStr, Toast.LENGTH_LONG).show();
-//        try {
-//            sleep(2000);
-//        } catch (InterruptedException e) {
-//            throw new RuntimeException(e);
-//        }
-//        game_grid.removeAllViews();
 
     }
     private class SwipeGestureListener extends GestureDetector.SimpleOnGestureListener {
@@ -147,17 +142,24 @@ public class MainActivity extends AppCompatActivity {
                     compressed_row_list.set(i+1, 0);
                 }
             }
-            for (int j : copy_row) {
+            List<Integer> compressed_2_times_row_list = new ArrayList<Integer>();
+            for (int j : compressed_row_list) {
                 if (j != 0) {
-                    compressed_row_list.add(j);
+
+                    compressed_2_times_row_list.add(j);
                 }
             }
-            while(compressed_row_list.size()<4){
-                compressed_row_list.add(0);
+            while(compressed_2_times_row_list.size()<4){
+                compressed_2_times_row_list.add(0);
             }
-            game_board[i] = compressed_row_list.stream().mapToInt(Integer::intValue).toArray();
+            game_board[i] = compressed_2_times_row_list.stream().mapToInt(Integer::intValue).toArray();
             if(game_board[i] != copy_row) {
                 changed = true;
+            }
+
+            if(changed){
+                generateRandomTile();
+                changed = false;
             }
         }
         updateBoard();
