@@ -24,7 +24,7 @@ import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity {
 
-    int[][] game_board = {{0,0,0,0},{0,0,0,0},{0,0,0,0},{0,0,0,0}};
+    int[][] game_board = new int[4][4];
 
     TextView blockTemplate, blockNoneTemplate;
     GridLayout game_grid;
@@ -45,6 +45,12 @@ public class MainActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+
+        for(int i = 0; i < 4; i++) {
+            for(int j = 0; j < 4; j++) {
+                game_board[i][j] = 0;
+            }
+        }
 
         blockTemplate = findViewById(R.id.block_template);
         blockNoneTemplate = findViewById(R.id.block_none_template);
@@ -125,47 +131,38 @@ public class MainActivity extends AppCompatActivity {
 
     private void onSwipeLeft() {
         boolean changed = false;
-        for(int i=0; i<game_board.length; i++){
-            int[] copy_row = game_board[i];
-            List<Integer> compressed_row_list = new ArrayList<Integer>();
-            for (int j : copy_row) {
-                if (j != 0) {
-                    compressed_row_list.add(j);
-                }
-            }
-            while(compressed_row_list.size()<4){
-                compressed_row_list.add(0);
-            }
-            for(int j=0; j<compressed_row_list.size(); j++){
-                if(compressed_row_list.get(i) != 0 && Objects.equals(compressed_row_list.get(i), compressed_row_list.get(i + 1))){
-                    compressed_row_list.set(i, compressed_row_list.get(i)*2);
-                    compressed_row_list.set(i+1, 0);
-                }
-            }
-            List<Integer> compressed_2_times_row_list = new ArrayList<Integer>();
-            for (int j : compressed_row_list) {
-                if (j != 0) {
+        for (int i = 0; i < game_board.length; i++) {
+            int[] original = java.util.Arrays.copyOf(game_board[i], game_board[i].length);
 
-                    compressed_2_times_row_list.add(j);
+            List<Integer> compressed = new ArrayList<>();
+            for (int value : original) if (value != 0) compressed.add(value);
+
+            for (int j = 0; j < compressed.size() - 1; j++) {
+                if (compressed.get(j).equals(compressed.get(j + 1))) {
+                    compressed.set(j, compressed.get(j) * 2);
+                    compressed.remove(j + 1);
                 }
             }
-            while(compressed_2_times_row_list.size()<4){
-                compressed_2_times_row_list.add(0);
-            }
-            game_board[i] = compressed_2_times_row_list.stream().mapToInt(Integer::intValue).toArray();
-            if(game_board[i] != copy_row) {
+
+            while (compressed.size() < 4) compressed.add(0);
+
+            int[] newRow = compressed.stream().mapToInt(Integer::intValue).toArray();
+            game_board[i] = newRow;
+
+            if (!java.util.Arrays.equals(game_board[i], original)) {
                 changed = true;
             }
         }
-        if(changed){
+
+        if (changed) {
             generateRandomTile();
             updateBoard();
         }
+
         String boardStr = java.util.Arrays.deepToString(game_board);
         Toast.makeText(context, boardStr, Toast.LENGTH_LONG).show();
-//        String boardStr = java.util.Arrays.deepToString(game_board);
-//        Toast.makeText(context, boardStr, Toast.LENGTH_LONG).show();
     }
+
 
     private void onSwipeRight() {
         Log.d("Swipe", "RIGHT");
@@ -181,9 +178,10 @@ public class MainActivity extends AppCompatActivity {
 
     public void updateBoard() {
         game_grid.removeAllViews();
-        for (int i = 0; i < game_board.length; i++) {
-            for (int j = 0; j < game_board[i].length; j++) {
-                int value = game_board[i][j];
+        game_grid.setColumnCount(4);
+        game_grid.setRowCount(4);
+        for (int[] rows : game_board) {
+            for (int value : rows) {
                 if (value != 0) {
                     generate_2048_block(context, blockTemplate, value);
                 } else {
@@ -220,10 +218,7 @@ public class MainActivity extends AppCompatActivity {
         block.setBackground(blockTemplate.getBackground());
         block.setTextColor(blockTemplate.getTextColors().getDefaultColor());
         block.setTypeface(blockTemplate.getTypeface(), blockTemplate.getTypeface().getStyle());
-        block.setText(String.valueOf(value));
-
-        int number = (Math.random() < 0.8) ? 2 : 4;
-        block.setText(String.valueOf(number));
+        block.setText(value==0 ? "" : String.valueOf(value));
 
         grid.addView(block);
     }
