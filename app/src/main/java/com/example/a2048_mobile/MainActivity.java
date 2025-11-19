@@ -26,7 +26,6 @@ public class MainActivity extends AppCompatActivity {
 
     int[][] game_board = {{0,0,0,0},{0,0,0,0},{0,0,0,0},{0,0,0,0}};
 
-    boolean changed = false;
     TextView blockTemplate, blockNoneTemplate;
     GridLayout game_grid;
 
@@ -125,6 +124,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void onSwipeLeft() {
+        boolean changed = false;
         for(int i=0; i<game_board.length; i++){
             int[] copy_row = game_board[i];
             List<Integer> compressed_row_list = new ArrayList<Integer>();
@@ -156,13 +156,11 @@ public class MainActivity extends AppCompatActivity {
             if(game_board[i] != copy_row) {
                 changed = true;
             }
-
-            if(changed){
-                generateRandomTile();
-                changed = false;
-            }
         }
-        updateBoard();
+        if(changed){
+            generateRandomTile();
+            updateBoard();
+        }
         String boardStr = java.util.Arrays.deepToString(game_board);
         Toast.makeText(context, boardStr, Toast.LENGTH_LONG).show();
 //        String boardStr = java.util.Arrays.deepToString(game_board);
