@@ -109,23 +109,18 @@ public class MainActivity extends AppCompatActivity {
 
     private int generateRandomTile(){
         int random_number = (Math.random() < 0.8) ? 2 : 4;
-
         int random_x_max = game_board.length - 1;
         int random_y_max = game_board[0].length - 1;
         int random_x_min = 0;
         int random_y_min = 0;
-
         int range_x = random_x_max - random_x_min + 1;
         int range_y = random_y_max - random_y_min + 1;
-
         int random_x;
         int random_y;
-
         do{
             random_x = (int)(Math.random() * range_x) + random_x_min;
             random_y = (int)(Math.random() * range_y) + random_y_min;
         } while(game_board[random_x][random_y] != 0);
-
         game_board[random_x][random_y] = random_number;
         return random_number;
     }
@@ -134,34 +129,25 @@ public class MainActivity extends AppCompatActivity {
         boolean changed = false;
         for (int i = 0; i < game_board.length; i++) {
             int[] original = java.util.Arrays.copyOf(game_board[i], game_board[i].length);
-
             List<Integer> compressed = new ArrayList<>();
             for (int value : original) if (value != 0) compressed.add(value);
-
             for (int j = 0; j < compressed.size() - 1; j++) {
                 if (compressed.get(j).equals(compressed.get(j + 1))) {
                     compressed.set(j, compressed.get(j) * 2);
                     compressed.remove(j + 1);
                 }
             }
-
             while (compressed.size() < 4) compressed.add(0);
-
             int[] newRow = compressed.stream().mapToInt(Integer::intValue).toArray();
             game_board[i] = newRow;
-
-            if (!java.util.Arrays.equals(game_board[i], original)) {
-                changed = true;
-            }
+            if (!java.util.Arrays.equals(game_board[i], original)) changed = true;
         }
-
         if (changed) {
             generateRandomTile();
             updateBoard();
             moves_count++;
             checkGameOver();
         }
-
         String boardStr = java.util.Arrays.deepToString(game_board);
         Toast.makeText(context, boardStr, Toast.LENGTH_LONG).show();
     }
@@ -170,10 +156,8 @@ public class MainActivity extends AppCompatActivity {
         boolean changed = false;
         for (int i = 0; i < game_board.length; i++) {
             int[] original = java.util.Arrays.copyOf(game_board[i], game_board[i].length);
-
             List<Integer> compressed = new ArrayList<>();
             for (int value : original) if (value != 0) compressed.add(value);
-
             for (int j = compressed.size()-1; j > 0; j--) {
                 if (compressed.get(j-1).equals(compressed.get(j))) {
                     compressed.set(j, compressed.get(j) * 2);
@@ -181,26 +165,17 @@ public class MainActivity extends AppCompatActivity {
                     j-=1;
                 }
             }
-
-            while (compressed.size() < 4){
-                compressed.add(0, 0);
-            }
-
+            while (compressed.size() < 4) compressed.add(0, 0);
             int[] newRow = compressed.stream().mapToInt(Integer::intValue).toArray();
             game_board[i] = newRow;
-
-            if (!java.util.Arrays.equals(game_board[i], original)) {
-                changed = true;
-            }
+            if (!java.util.Arrays.equals(game_board[i], original)) changed = true;
         }
-
         if (changed) {
             generateRandomTile();
             updateBoard();
             moves_count++;
             checkGameOver();
         }
-
         String boardStr = java.util.Arrays.deepToString(game_board);
         Toast.makeText(context, boardStr, Toast.LENGTH_LONG).show();
     }
@@ -209,41 +184,26 @@ public class MainActivity extends AppCompatActivity {
         boolean changed = false;
         for (int j = 0; j < game_board.length; j++) {
             int[] originalColumn = new int[game_board.length];
-            for(int i = 0; i < game_board.length; i++) {
-                originalColumn[i] = game_board[i][j];
-            }
-
+            for(int i = 0; i < game_board.length; i++) originalColumn[i] = game_board[i][j];
             List<Integer> compressed = new ArrayList<>();
             for (int value : originalColumn) if (value != 0) compressed.add(value);
-
             for (int i = 0; i < compressed.size()-1; i++) {
                 if (compressed.get(i).equals(compressed.get(i + 1))) {
                     compressed.set(i, compressed.get(i) * 2);
                     compressed.remove(i + 1);
                 }
             }
-
-            while (compressed.size() < 4){
-                compressed.add(0);
-            }
-
+            while (compressed.size() < 4) compressed.add(0);
             int[] newColumn = compressed.stream().mapToInt(Integer::intValue).toArray();
-            for(int i = 0; i < game_board.length; i++) {
-                game_board[i][j] = newColumn[i];
-            }
-
-            if (!java.util.Arrays.equals(newColumn, originalColumn)) {
-                changed = true;
-            }
+            for(int i = 0; i < game_board.length; i++) game_board[i][j] = newColumn[i];
+            if (!java.util.Arrays.equals(newColumn, originalColumn)) changed = true;
         }
-
         if (changed) {
             generateRandomTile();
             updateBoard();
             moves_count++;
             checkGameOver();
         }
-
         String boardStr = java.util.Arrays.deepToString(game_board);
         Toast.makeText(context, boardStr, Toast.LENGTH_LONG).show();
     }
@@ -252,13 +212,9 @@ public class MainActivity extends AppCompatActivity {
         boolean changed = false;
         for (int j = 0; j < game_board.length; j++) {
             int[] originalColumn = new int[game_board.length];
-            for(int i = 0; i < game_board.length; i++) {
-                originalColumn[i] = game_board[i][j];
-            }
-
+            for(int i = 0; i < game_board.length; i++) originalColumn[i] = game_board[i][j];
             List<Integer> compressed = new ArrayList<>();
             for (int value : originalColumn) if (value != 0) compressed.add(value);
-
             for (int i = compressed.size()-1; i > 0; i--) {
                 if (compressed.get(i).equals(compressed.get(i - 1))) {
                     compressed.set(i, compressed.get(i) * 2);
@@ -266,28 +222,17 @@ public class MainActivity extends AppCompatActivity {
                     i--;
                 }
             }
-
-            while (compressed.size() < 4){
-                compressed.add(0, 0);
-            }
-
+            while (compressed.size() < 4) compressed.add(0, 0);
             int[] newColumn = compressed.stream().mapToInt(Integer::intValue).toArray();
-            for(int i = 0; i < game_board.length; i++) {
-                game_board[i][j] = newColumn[i];
-            }
-
-            if (!java.util.Arrays.equals(newColumn, originalColumn)) {
-                changed = true;
-            }
+            for(int i = 0; i < game_board.length; i++) game_board[i][j] = newColumn[i];
+            if (!java.util.Arrays.equals(newColumn, originalColumn)) changed = true;
         }
-
         if (changed) {
             generateRandomTile();
             updateBoard();
             moves_count++;
             checkGameOver();
         }
-
         String boardStr = java.util.Arrays.deepToString(game_board);
         Toast.makeText(context, boardStr, Toast.LENGTH_LONG).show();
     }
@@ -298,25 +243,19 @@ public class MainActivity extends AppCompatActivity {
         game_grid.setRowCount(4);
         for (int[] rows : game_board) {
             for (int value : rows) {
-                if (value != 0) {
-                    generate_2048_block(context, blockTemplate, value);
-                } else {
-                    generate_2048_block(context, blockNoneTemplate, value);
-                }
+                if (value != 0) generate_2048_block(context, blockTemplate, value);
+                else generate_2048_block(context, blockNoneTemplate, value);
             }
         }
     }
 
     public void generate_2048_block(Context context, TextView blockTemplate, int value) {
         GridLayout grid = findViewById(R.id.game_grid);
-
         TextView block = new TextView(context);
-
         android.view.ViewGroup.LayoutParams origLp = blockTemplate.getLayoutParams();
         GridLayout.LayoutParams newLp;
-        if (origLp instanceof GridLayout.LayoutParams) {
-            newLp = new GridLayout.LayoutParams((GridLayout.LayoutParams) origLp);
-        } else {
+        if (origLp instanceof GridLayout.LayoutParams) newLp = new GridLayout.LayoutParams((GridLayout.LayoutParams) origLp);
+        else {
             int w = (origLp != null && origLp.width > 0) ? origLp.width : dpToPx(80);
             int h = (origLp != null && origLp.height > 0) ? origLp.height : dpToPx(80);
             newLp = new GridLayout.LayoutParams();
@@ -328,14 +267,12 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         block.setLayoutParams(newLp);
-
         block.setGravity(blockTemplate.getGravity());
         block.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 36);
         block.setBackground(blockTemplate.getBackground());
         block.setTextColor(blockTemplate.getTextColors().getDefaultColor());
         block.setTypeface(blockTemplate.getTypeface(), blockTemplate.getTypeface().getStyle());
         block.setText(value==0 ? "" : String.valueOf(value));
-
         grid.addView(block);
     }
 
@@ -344,29 +281,18 @@ public class MainActivity extends AppCompatActivity {
         return Math.round(dp * density);
     }
 
-    // ----------- GAME OVER LOGIC ----------------
-
     private boolean isGameOver() {
-        // sprawdzenie, czy są jeszcze puste pola
         for (int i = 0; i < 4; i++)
             for (int j = 0; j < 4; j++)
-                if (game_board[i][j] == 0)
-                    return false;
-
-        // sprawdzenie, czy są możliwe połączenia w poziomie lub pionie
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 3; j++) {
+                if (game_board[i][j] == 0) return false;
+        for (int i = 0; i < 4; i++)
+            for (int j = 0; j < 3; j++)
                 if (game_board[i][j] == game_board[i][j+1] || game_board[j][i] == game_board[j+1][i])
                     return false;
-            }
-        }
-
         return true;
     }
 
     private void checkGameOver() {
-        if (isGameOver()) {
-            Toast.makeText(context, "Game Over!", Toast.LENGTH_LONG).show();
-        }
+        if (isGameOver()) Toast.makeText(context, "Game Over!", Toast.LENGTH_LONG).show();
     }
 }
