@@ -1,5 +1,7 @@
 package com.example.a2048_mobile;
 
+//eoeoeoeoeoeoeoeoeeeoslakdjalskj LOOOOLLLL
+
 import static java.lang.Thread.sleep;
 
 import android.content.Context;
