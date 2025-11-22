@@ -141,7 +141,6 @@ public class MainActivity extends AppCompatActivity {
                 if (compressed.get(j).equals(compressed.get(j + 1))) {
                     compressed.set(j, compressed.get(j) * 2);
                     compressed.remove(j + 1);
-                    j+=1;
                 }
             }
 
@@ -217,7 +216,6 @@ public class MainActivity extends AppCompatActivity {
                 if (compressed.get(i).equals(compressed.get(i + 1))) {
                     compressed.set(i, compressed.get(i) * 2);
                     compressed.remove(i + 1);
-                    i+=1;
                 }
             }
 
