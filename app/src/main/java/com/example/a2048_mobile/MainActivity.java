@@ -1,7 +1,5 @@
 package com.example.a2048_mobile;
 
-//eoeoeoeoeoeoeoeoeeeoslakdjalskj LOOOOLLLL
-
 import static java.lang.Thread.sleep;
 
 import android.content.Context;
@@ -27,6 +25,7 @@ import java.util.Objects;
 public class MainActivity extends AppCompatActivity {
 
     int[][] game_board = new int[4][4];
+    int moves_count = 0;
 
     TextView blockTemplate, blockNoneTemplate;
     GridLayout game_grid;
@@ -159,6 +158,7 @@ public class MainActivity extends AppCompatActivity {
         if (changed) {
             generateRandomTile();
             updateBoard();
+            moves_count++;
         }
 
         String boardStr = java.util.Arrays.deepToString(game_board);
@@ -197,6 +197,7 @@ public class MainActivity extends AppCompatActivity {
         if (changed) {
             generateRandomTile();
             updateBoard();
+            moves_count++;
         }
 
         String boardStr = java.util.Arrays.deepToString(game_board);
@@ -238,6 +239,7 @@ public class MainActivity extends AppCompatActivity {
         if (changed) {
             generateRandomTile();
             updateBoard();
+            moves_count++;
         }
 
         String boardStr = java.util.Arrays.deepToString(game_board);
@@ -245,8 +247,52 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void onSwipeDown() {
-        Log.d("Swipe", "DOWN");
+        boolean changed = false;
+
+        for (int j = 0; j < game_board.length; j++) {
+
+            int[] originalColumn = new int[game_board.length];
+            for (int i = 0; i < game_board.length; i++) {
+                originalColumn[i] = game_board[i][j];
+            }
+
+            List<Integer> compressed = new ArrayList<>();
+            for (int value : originalColumn) {
+                if (value != 0) compressed.add(value);
+            }
+
+            for (int i = compressed.size() - 1; i > 0; i--) {
+                if (compressed.get(i).equals(compressed.get(i - 1))) {
+                    compressed.set(i, compressed.get(i) * 2);
+                    compressed.remove(i - 1);
+                    i--;
+                }
+            }
+
+            while (compressed.size() < 4) {
+                compressed.add(0, 0);
+            }
+
+            int[] newColumn = compressed.stream().mapToInt(Integer::intValue).toArray();
+            for (int i = 0; i < 4; i++) {
+                game_board[i][j] = newColumn[i];
+            }
+
+            if (!java.util.Arrays.equals(newColumn, originalColumn)) {
+                changed = true;
+            }
+        }
+
+        if (changed) {
+            generateRandomTile();
+            updateBoard();
+            moves_count++;
+        }
+
+        String boardStr = java.util.Arrays.deepToString(game_board);
+        Toast.makeText(context, boardStr, Toast.LENGTH_LONG).show();
     }
+
 
     public void updateBoard() {
         game_grid.removeAllViews();

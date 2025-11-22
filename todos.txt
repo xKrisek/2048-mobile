@@ -1,4 +1,4 @@
-liczenie ruchów;
+liczenie ruchów (jest w java, dorobic w xml);
 
 liczenie czasu gry;
 
