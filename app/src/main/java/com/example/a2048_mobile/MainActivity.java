@@ -141,6 +141,7 @@ public class MainActivity extends AppCompatActivity {
                 if (compressed.get(j).equals(compressed.get(j + 1))) {
                     compressed.set(j, compressed.get(j) * 2);
                     compressed.remove(j + 1);
+                    j+=1;
                 }
             }
 
@@ -172,10 +173,11 @@ public class MainActivity extends AppCompatActivity {
             List<Integer> compressed = new ArrayList<>();
             for (int value : original) if (value != 0) compressed.add(value);
 
-            for (int j = compressed.size()-1; j > 1; j--) {
-                if (compressed.get(j).equals(compressed.get(j - 1))) {
+            for (int j = compressed.size()-1; j > 0; j--) {
+                if (compressed.get(j-1).equals(compressed.get(j))) {
                     compressed.set(j, compressed.get(j) * 2);
                     compressed.remove(j - 1);
+                    j-=1;
                 }
             }
 
@@ -215,6 +217,7 @@ public class MainActivity extends AppCompatActivity {
                 if (compressed.get(i).equals(compressed.get(i + 1))) {
                     compressed.set(i, compressed.get(i) * 2);
                     compressed.remove(i + 1);
+                    i+=1;
                 }
             }
 
