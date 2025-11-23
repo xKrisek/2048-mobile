@@ -1,9 +1,5 @@
 liczenie ruchów (jest w java, dorobic w xml);
 
-liczenie czasu gry;
-
-liczenie zdobytych punktów;
-
 zapisywanie stanu gry;
 
 odczytywanie stanu gry;
