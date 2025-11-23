@@ -26,9 +26,9 @@ import java.util.Objects;
 public class MainActivity extends AppCompatActivity {
 
     int[][] game_board = new int[4][4];
-    int moves_count = 0;
+    int moves = 0;
 
-    TextView blockTemplate, blockNoneTemplate, points, best_score;
+    TextView blockTemplate, blockNoneTemplate, points, best_score, moves_count;
     GridLayout game_grid;
 
     Context context;
@@ -37,6 +37,9 @@ public class MainActivity extends AppCompatActivity {
     int bestScore = 0;
     private static final String PREFS_NAME = "com.example.a2048_mobile.prefs";
     private static final String PREF_BEST_SCORE = "best_score";
+    private static final String PREF_LAST_BOARD = "last_board";
+    private static final String PREF_LAST_SCORE = "last_score";
+    private static final String PREF_LAST_MOVES = "last_moves";
     SharedPreferences prefs;
 
     private static final int SWIPE_THRESHOLD = 100;
@@ -57,34 +60,37 @@ public class MainActivity extends AppCompatActivity {
         prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
         bestScore = prefs.getInt(PREF_BEST_SCORE, 0);
 
-        for(int i = 0; i < 4; i++) {
-            for(int j = 0; j < 4; j++) {
+        for(int i = 0; i < 4; i++)
+            for(int j = 0; j < 4; j++)
                 game_board[i][j] = 0;
-            }
-        }
 
         blockTemplate = findViewById(R.id.block_template);
         blockNoneTemplate = findViewById(R.id.block_none_template);
         points = findViewById(R.id.points);
         best_score = findViewById(R.id.best_score);
+        moves_count = findViewById(R.id.moves_count);
         context = this;
 
         resetScore();
-        best_score.setText(String.valueOf(bestScore)); // pokaż best przy starcie
+        if (best_score != null) best_score.setText(String.valueOf(bestScore));
+        if (moves_count != null) moves_count.setText(String.valueOf(moves));
 
         game_grid = findViewById(R.id.game_grid);
         GestureDetector gestureDetector = new GestureDetector(this, new SwipeGestureListener());
         game_grid.setOnTouchListener((v, event) -> gestureDetector.onTouchEvent(event));
 
-        for (int i = 0; i < 16; i++){
-            generate_2048_block(this, blockNoneTemplate, 0);
+        boolean loaded = loadLastState();
+        if (!loaded) {
+            generateRandomTile();
+            generateRandomTile();
+            updateBoard();
+            saveCurrentState();
+        } else {
+            updateBoard();
+            if (isGameOver()) {
+                resetGame();
+            }
         }
-        generateRandomTile();
-        generateRandomTile();
-        updateBoard();
-
-        String boardStr = java.util.Arrays.deepToString(game_board);
-        Toast.makeText(context, boardStr + "\nScore: " + score + " Best: " + bestScore, Toast.LENGTH_LONG).show();
     }
 
     private class SwipeGestureListener extends GestureDetector.SimpleOnGestureListener {
@@ -92,7 +98,6 @@ public class MainActivity extends AppCompatActivity {
         public boolean onDown(MotionEvent e) {
             return true;
         }
-
         @Override
         public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
             float diffX = e2.getX() - e1.getX();
@@ -124,23 +129,14 @@ public class MainActivity extends AppCompatActivity {
 
     private int generateRandomTile(){
         int random_number = (Math.random() < 0.8) ? 2 : 4;
-
-        int random_x_max = game_board.length - 1;
-        int random_y_max = game_board[0].length - 1;
-        int random_x_min = 0;
-        int random_y_min = 0;
-
-        int range_x = random_x_max - random_x_min + 1;
-        int range_y = random_y_max - random_y_min + 1;
-
+        int range_x = game_board.length;
+        int range_y = game_board[0].length;
         int random_x;
         int random_y;
-
         do{
-            random_x = (int)(Math.random() * range_x) + random_x_min;
-            random_y = (int)(Math.random() * range_y) + random_y_min;
+            random_x = (int)(Math.random() * range_x);
+            random_y = (int)(Math.random() * range_y);
         } while(game_board[random_x][random_y] != 0);
-
         game_board[random_x][random_y] = random_number;
         return random_number;
     }
@@ -149,10 +145,8 @@ public class MainActivity extends AppCompatActivity {
         boolean changed = false;
         for (int i = 0; i < game_board.length; i++) {
             int[] original = java.util.Arrays.copyOf(game_board[i], game_board[i].length);
-
             List<Integer> compressed = new ArrayList<>();
             for (int value : original) if (value != 0) compressed.add(value);
-
             for (int j = 0; j < compressed.size() - 1; j++) {
                 if (compressed.get(j).equals(compressed.get(j + 1))) {
                     int merged = compressed.get(j) * 2;
@@ -161,37 +155,30 @@ public class MainActivity extends AppCompatActivity {
                     addToScore(merged);
                 }
             }
-
             while (compressed.size() < 4) compressed.add(0);
-
             int[] newRow = compressed.stream().mapToInt(Integer::intValue).toArray();
             game_board[i] = newRow;
-
-            if (!java.util.Arrays.equals(game_board[i], original)) {
-                changed = true;
-            }
+            if (!java.util.Arrays.equals(game_board[i], original)) changed = true;
         }
-
         if (changed) {
             generateRandomTile();
             updateBoard();
-            moves_count++;
-            checkGameOver();
+            moves++;
+            if (moves_count != null) moves_count.setText(String.valueOf(moves));
+            if (isGameOver()) {
+                onGameOver();
+            } else {
+                saveCurrentState();
+            }
         }
-
-        String boardStr = java.util.Arrays.deepToString(game_board);
-        Toast.makeText(context, boardStr + "\nScore: " + score + " Best: " + bestScore, Toast.LENGTH_LONG).show();
     }
-
 
     private void onSwipeRight() {
         boolean changed = false;
         for (int i = 0; i < game_board.length; i++) {
             int[] original = java.util.Arrays.copyOf(game_board[i], game_board[i].length);
-
             List<Integer> compressed = new ArrayList<>();
             for (int value : original) if (value != 0) compressed.add(value);
-
             for (int j = compressed.size()-1; j > 0; j--) {
                 if (compressed.get(j-1).equals(compressed.get(j))) {
                     int merged = compressed.get(j) * 2;
@@ -201,41 +188,31 @@ public class MainActivity extends AppCompatActivity {
                     j-=1;
                 }
             }
-
-            while (compressed.size() < 4){
-                compressed.add(0, 0);
-            }
-
+            while (compressed.size() < 4) compressed.add(0, 0);
             int[] newRow = compressed.stream().mapToInt(Integer::intValue).toArray();
             game_board[i] = newRow;
-
-            if (!java.util.Arrays.equals(game_board[i], original)) {
-                changed = true;
-            }
+            if (!java.util.Arrays.equals(game_board[i], original)) changed = true;
         }
-
         if (changed) {
             generateRandomTile();
             updateBoard();
-            moves_count++;
-            checkGameOver();
+            moves++;
+            if (moves_count != null) moves_count.setText(String.valueOf(moves));
+            if (isGameOver()) {
+                onGameOver();
+            } else {
+                saveCurrentState();
+            }
         }
-
-        String boardStr = java.util.Arrays.deepToString(game_board);
-        Toast.makeText(context, boardStr + "\nScore: " + score + " Best: " + bestScore, Toast.LENGTH_LONG).show();
     }
 
     private void onSwipeUp() {
         boolean changed = false;
         for (int j = 0; j < game_board.length; j++) {
             int[] originalColumn = new int[game_board.length];
-            for(int i = 0; i < game_board.length; i++) {
-                originalColumn[i] = game_board[i][j];
-            }
-
+            for(int i = 0; i < game_board.length; i++) originalColumn[i] = game_board[i][j];
             List<Integer> compressed = new ArrayList<>();
             for (int value : originalColumn) if (value != 0) compressed.add(value);
-
             for (int i = 0; i < compressed.size()-1; i++) {
                 if (compressed.get(i).equals(compressed.get(i + 1))) {
                     int merged = compressed.get(i) * 2;
@@ -244,43 +221,31 @@ public class MainActivity extends AppCompatActivity {
                     addToScore(merged);
                 }
             }
-
-            while (compressed.size() < 4){
-                compressed.add(0);
-            }
-
+            while (compressed.size() < 4) compressed.add(0);
             int[] newColumn = compressed.stream().mapToInt(Integer::intValue).toArray();
-            for(int i = 0; i < game_board.length; i++) {
-                game_board[i][j] = newColumn[i];
-            }
-
-            if (!java.util.Arrays.equals(newColumn, originalColumn)) {
-                changed = true;
-            }
+            for(int i = 0; i < game_board.length; i++) game_board[i][j] = newColumn[i];
+            if (!java.util.Arrays.equals(newColumn, originalColumn)) changed = true;
         }
-
         if (changed) {
             generateRandomTile();
             updateBoard();
-            moves_count++;
-            checkGameOver();
+            moves++;
+            if (moves_count != null) moves_count.setText(String.valueOf(moves));
+            if (isGameOver()) {
+                onGameOver();
+            } else {
+                saveCurrentState();
+            }
         }
-
-        String boardStr = java.util.Arrays.deepToString(game_board);
-        Toast.makeText(context, boardStr + "\nScore: " + score + " Best: " + bestScore, Toast.LENGTH_LONG).show();
     }
 
     private void onSwipeDown() {
         boolean changed = false;
         for (int j = 0; j < game_board.length; j++) {
             int[] originalColumn = new int[game_board.length];
-            for(int i = 0; i < game_board.length; i++) {
-                originalColumn[i] = game_board[i][j];
-            }
-
+            for(int i = 0; i < game_board.length; i++) originalColumn[i] = game_board[i][j];
             List<Integer> compressed = new ArrayList<>();
             for (int value : originalColumn) if (value != 0) compressed.add(value);
-
             for (int i = compressed.size()-1; i > 0; i--) {
                 if (compressed.get(i).equals(compressed.get(i - 1))) {
                     int merged = compressed.get(i) * 2;
@@ -290,30 +255,22 @@ public class MainActivity extends AppCompatActivity {
                     i--;
                 }
             }
-
-            while (compressed.size() < 4){
-                compressed.add(0, 0);
-            }
-
+            while (compressed.size() < 4) compressed.add(0, 0);
             int[] newColumn = compressed.stream().mapToInt(Integer::intValue).toArray();
-            for(int i = 0; i < game_board.length; i++) {
-                game_board[i][j] = newColumn[i];
-            }
-
-            if (!java.util.Arrays.equals(newColumn, originalColumn)) {
-                changed = true;
-            }
+            for(int i = 0; i < game_board.length; i++) game_board[i][j] = newColumn[i];
+            if (!java.util.Arrays.equals(newColumn, originalColumn)) changed = true;
         }
-
         if (changed) {
             generateRandomTile();
             updateBoard();
-            moves_count++;
-            checkGameOver();
+            moves++;
+            if (moves_count != null) moves_count.setText(String.valueOf(moves));
+            if (isGameOver()) {
+                onGameOver();
+            } else {
+                saveCurrentState();
+            }
         }
-
-        String boardStr = java.util.Arrays.deepToString(game_board);
-        Toast.makeText(context, boardStr + "\nScore: " + score + " Best: " + bestScore, Toast.LENGTH_LONG).show();
     }
 
     public void updateBoard() {
@@ -333,9 +290,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void generate_2048_block(Context context, TextView blockTemplate, int value) {
         GridLayout grid = findViewById(R.id.game_grid);
-
         TextView block = new TextView(context);
-
         android.view.ViewGroup.LayoutParams origLp = blockTemplate.getLayoutParams();
         GridLayout.LayoutParams newLp;
         if (origLp instanceof GridLayout.LayoutParams) {
@@ -352,14 +307,12 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         block.setLayoutParams(newLp);
-
         block.setGravity(blockTemplate.getGravity());
         block.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 36);
         block.setBackground(blockTemplate.getBackground());
         block.setTextColor(blockTemplate.getTextColors().getDefaultColor());
         block.setTypeface(blockTemplate.getTypeface(), blockTemplate.getTypeface().getStyle());
         block.setText(value==0 ? "" : String.valueOf(value));
-
         grid.addView(block);
     }
 
@@ -379,8 +332,51 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
-    private void checkGameOver() {
-        if (isGameOver()) Toast.makeText(context, "Game Over!", Toast.LENGTH_LONG).show();
+    private void onGameOver() {
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.remove(PREF_LAST_BOARD);
+        editor.remove(PREF_LAST_SCORE);
+        editor.remove(PREF_LAST_MOVES);
+        editor.apply();
+        Toast.makeText(context, "Game Over! Score: " + score + " Best: " + bestScore, Toast.LENGTH_LONG).show();
+    }
+
+    private boolean loadLastState() {
+        String boardStr = prefs.getString(PREF_LAST_BOARD, null);
+        int lastScore = prefs.getInt(PREF_LAST_SCORE, -1);
+        int lastMoves = prefs.getInt(PREF_LAST_MOVES, -1);
+        if (boardStr == null) return false;
+        String[] vals = boardStr.split(",");
+        if (vals.length < 16) return false;
+        for (int i = 0; i < 16; i++) {
+            try {
+                game_board[i / 4][i % 4] = Integer.parseInt(vals[i]);
+            } catch (NumberFormatException e) {
+                return false;
+            }
+        }
+        if (lastScore >= 0) {
+            score = lastScore;
+            if (points != null) points.setText(String.valueOf(score));
+        }
+        if (lastMoves >= 0) {
+            moves = lastMoves;
+            if (moves_count != null) moves_count.setText(String.valueOf(moves));
+        }
+        if (best_score != null) best_score.setText(String.valueOf(bestScore));
+        return true;
+    }
+
+    private void saveCurrentState() {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 4; i++)
+            for (int j = 0; j < 4; j++)
+                sb.append(game_board[i][j]).append(",");
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putString(PREF_LAST_BOARD, sb.toString());
+        editor.putInt(PREF_LAST_SCORE, score);
+        editor.putInt(PREF_LAST_MOVES, moves);
+        editor.apply();
     }
 
     private void addToScore(int delta) {
@@ -390,12 +386,25 @@ public class MainActivity extends AppCompatActivity {
             bestScore = score;
             prefs.edit().putInt(PREF_BEST_SCORE, bestScore).apply();
         }
-        points.setText(String.valueOf(score));
-        best_score.setText(String.valueOf(bestScore));
+        if (points != null) points.setText(String.valueOf(score));
+        if (best_score != null) best_score.setText(String.valueOf(bestScore));
     }
 
     private void resetScore() {
         score = 0;
         if (points != null) points.setText(String.valueOf(score));
+        moves = 0;
+        if (moves_count != null) moves_count.setText(String.valueOf(moves));
+    }
+
+    private void resetGame() {
+        for (int i = 0; i < 4; i++)
+            for (int j = 0; j < 4; j++)
+                game_board[i][j] = 0;
+        resetScore();
+        generateRandomTile();
+        generateRandomTile();
+        updateBoard();
+        saveCurrentState();
     }
 }
