@@ -1,12 +1,8 @@
 package com.example.a2048_mobile;
 
-import static java.lang.Thread.sleep;
-
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.widget.GridLayout;
@@ -19,9 +15,12 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -36,10 +35,7 @@ public class MainActivity extends AppCompatActivity {
     int score = 0;
     int bestScore = 0;
     private static final String PREFS_NAME = "com.example.a2048_mobile.prefs";
-    private static final String PREF_BEST_SCORE = "best_score";
-    private static final String PREF_LAST_BOARD = "last_board";
-    private static final String PREF_LAST_SCORE = "last_score";
-    private static final String PREF_LAST_MOVES = "last_moves";
+    private static final String PREF_LAST_STATE_JSON = "last_state_json";
     SharedPreferences prefs;
 
     private static final int SWIPE_THRESHOLD = 100;
@@ -58,7 +54,6 @@ public class MainActivity extends AppCompatActivity {
         });
 
         prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-        bestScore = prefs.getInt(PREF_BEST_SCORE, 0);
 
         for(int i = 0; i < 4; i++)
             for(int j = 0; j < 4; j++)
@@ -72,8 +67,6 @@ public class MainActivity extends AppCompatActivity {
         context = this;
 
         resetScore();
-        if (best_score != null) best_score.setText(String.valueOf(bestScore));
-        if (moves_count != null) moves_count.setText(String.valueOf(moves));
 
         game_grid = findViewById(R.id.game_grid);
         GestureDetector gestureDetector = new GestureDetector(this, new SwipeGestureListener());
@@ -95,9 +88,8 @@ public class MainActivity extends AppCompatActivity {
 
     private class SwipeGestureListener extends GestureDetector.SimpleOnGestureListener {
         @Override
-        public boolean onDown(MotionEvent e) {
-            return true;
-        }
+        public boolean onDown(MotionEvent e) { return true; }
+
         @Override
         public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
             float diffX = e2.getX() - e1.getX();
@@ -105,20 +97,12 @@ public class MainActivity extends AppCompatActivity {
             try {
                 if (Math.abs(diffX) > Math.abs(diffY)) {
                     if (Math.abs(diffX) > SWIPE_THRESHOLD && Math.abs(velocityX) > SWIPE_VELOCITY_THRESHOLD) {
-                        if (diffX > 0) {
-                            onSwipeRight();
-                        } else {
-                            onSwipeLeft();
-                        }
+                        if (diffX > 0) onSwipeRight(); else onSwipeLeft();
                         return true;
                     }
                 } else {
                     if (Math.abs(diffY) > SWIPE_THRESHOLD && Math.abs(velocityY) > SWIPE_VELOCITY_THRESHOLD) {
-                        if (diffY > 0) {
-                            onSwipeDown();
-                        } else {
-                            onSwipeUp();
-                        }
+                        if (diffY > 0) onSwipeDown(); else onSwipeUp();
                         return true;
                     }
                 }
@@ -131,9 +115,8 @@ public class MainActivity extends AppCompatActivity {
         int random_number = (Math.random() < 0.8) ? 2 : 4;
         int range_x = game_board.length;
         int range_y = game_board[0].length;
-        int random_x;
-        int random_y;
-        do{
+        int random_x, random_y;
+        do {
             random_x = (int)(Math.random() * range_x);
             random_y = (int)(Math.random() * range_y);
         } while(game_board[random_x][random_y] != 0);
@@ -165,10 +148,9 @@ public class MainActivity extends AppCompatActivity {
             updateBoard();
             moves++;
             if (moves_count != null) moves_count.setText(String.valueOf(moves));
-            if (isGameOver()) {
-                onGameOver();
-            } else {
+            if (isGameOver()) onGameOver(); else {
                 saveCurrentState();
+                checkWin();
             }
         }
     }
@@ -198,10 +180,9 @@ public class MainActivity extends AppCompatActivity {
             updateBoard();
             moves++;
             if (moves_count != null) moves_count.setText(String.valueOf(moves));
-            if (isGameOver()) {
-                onGameOver();
-            } else {
+            if (isGameOver()) onGameOver(); else {
                 saveCurrentState();
+                checkWin();
             }
         }
     }
@@ -231,10 +212,9 @@ public class MainActivity extends AppCompatActivity {
             updateBoard();
             moves++;
             if (moves_count != null) moves_count.setText(String.valueOf(moves));
-            if (isGameOver()) {
-                onGameOver();
-            } else {
+            if (isGameOver()) onGameOver(); else {
                 saveCurrentState();
+                checkWin();
             }
         }
     }
@@ -265,10 +245,9 @@ public class MainActivity extends AppCompatActivity {
             updateBoard();
             moves++;
             if (moves_count != null) moves_count.setText(String.valueOf(moves));
-            if (isGameOver()) {
-                onGameOver();
-            } else {
+            if (isGameOver()) onGameOver(); else {
                 saveCurrentState();
+                checkWin();
             }
         }
     }
@@ -279,11 +258,8 @@ public class MainActivity extends AppCompatActivity {
         game_grid.setRowCount(4);
         for (int[] rows : game_board) {
             for (int value : rows) {
-                if (value != 0) {
-                    generate_2048_block(context, blockTemplate, value);
-                } else {
-                    generate_2048_block(context, blockNoneTemplate, value);
-                }
+                if (value != 0) generate_2048_block(context, blockTemplate, value);
+                else generate_2048_block(context, blockNoneTemplate, value);
             }
         }
     }
@@ -293,9 +269,8 @@ public class MainActivity extends AppCompatActivity {
         TextView block = new TextView(context);
         android.view.ViewGroup.LayoutParams origLp = blockTemplate.getLayoutParams();
         GridLayout.LayoutParams newLp;
-        if (origLp instanceof GridLayout.LayoutParams) {
-            newLp = new GridLayout.LayoutParams((GridLayout.LayoutParams) origLp);
-        } else {
+        if (origLp instanceof GridLayout.LayoutParams) newLp = new GridLayout.LayoutParams((GridLayout.LayoutParams) origLp);
+        else {
             int w = (origLp != null && origLp.width > 0) ? origLp.width : dpToPx(80);
             int h = (origLp != null && origLp.height > 0) ? origLp.height : dpToPx(80);
             newLp = new GridLayout.LayoutParams();
@@ -327,56 +302,55 @@ public class MainActivity extends AppCompatActivity {
                 if (game_board[i][j] == 0) return false;
         for (int i = 0; i < 4; i++)
             for (int j = 0; j < 3; j++)
-                if (game_board[i][j] == game_board[i][j+1] || game_board[j][i] == game_board[j+1][i])
-                    return false;
+                if (game_board[i][j] == game_board[i][j+1] || game_board[j][i] == game_board[j+1][i]) return false;
         return true;
     }
 
     private void onGameOver() {
-        SharedPreferences.Editor editor = prefs.edit();
-        editor.remove(PREF_LAST_BOARD);
-        editor.remove(PREF_LAST_SCORE);
-        editor.remove(PREF_LAST_MOVES);
-        editor.apply();
+        prefs.edit().remove(PREF_LAST_STATE_JSON).apply();
         Toast.makeText(context, "Game Over! Score: " + score + " Best: " + bestScore, Toast.LENGTH_LONG).show();
     }
 
     private boolean loadLastState() {
-        String boardStr = prefs.getString(PREF_LAST_BOARD, null);
-        int lastScore = prefs.getInt(PREF_LAST_SCORE, -1);
-        int lastMoves = prefs.getInt(PREF_LAST_MOVES, -1);
-        if (boardStr == null) return false;
-        String[] vals = boardStr.split(",");
-        if (vals.length < 16) return false;
-        for (int i = 0; i < 16; i++) {
-            try {
-                game_board[i / 4][i % 4] = Integer.parseInt(vals[i]);
-            } catch (NumberFormatException e) {
-                return false;
+        String jsonStr = prefs.getString(PREF_LAST_STATE_JSON, null);
+        if (jsonStr == null) return false;
+        try {
+            JSONObject state = new JSONObject(jsonStr);
+            JSONArray board = state.getJSONArray("board");
+            for (int i = 0; i < 4; i++) {
+                JSONArray row = board.getJSONArray(i);
+                for (int j = 0; j < 4; j++) game_board[i][j] = row.getInt(j);
             }
-        }
-        if (lastScore >= 0) {
-            score = lastScore;
+            score = state.getInt("score");
+            moves = state.getInt("moves");
+            bestScore = state.getInt("bestScore");
             if (points != null) points.setText(String.valueOf(score));
-        }
-        if (lastMoves >= 0) {
-            moves = lastMoves;
             if (moves_count != null) moves_count.setText(String.valueOf(moves));
+            if (best_score != null) best_score.setText(String.valueOf(bestScore));
+            return true;
+        } catch (JSONException e) {
+            e.printStackTrace();
+            return false;
         }
-        if (best_score != null) best_score.setText(String.valueOf(bestScore));
-        return true;
     }
 
     private void saveCurrentState() {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < 4; i++)
-            for (int j = 0; j < 4; j++)
-                sb.append(game_board[i][j]).append(",");
-        SharedPreferences.Editor editor = prefs.edit();
-        editor.putString(PREF_LAST_BOARD, sb.toString());
-        editor.putInt(PREF_LAST_SCORE, score);
-        editor.putInt(PREF_LAST_MOVES, moves);
-        editor.apply();
+        try {
+            JSONObject state = new JSONObject();
+            JSONArray board = new JSONArray();
+            for (int i = 0; i < 4; i++) {
+                JSONArray row = new JSONArray();
+                for (int j = 0; j < 4; j++) row.put(game_board[i][j]);
+                board.put(row);
+            }
+            state.put("board", board);
+            state.put("score", score);
+            state.put("moves", moves);
+            state.put("bestScore", bestScore);
+            prefs.edit().putString(PREF_LAST_STATE_JSON, state.toString()).apply();
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
     }
 
     private void addToScore(int delta) {
@@ -384,10 +358,9 @@ public class MainActivity extends AppCompatActivity {
         score += delta;
         if (score > bestScore) {
             bestScore = score;
-            prefs.edit().putInt(PREF_BEST_SCORE, bestScore).apply();
+            if (best_score != null) best_score.setText(String.valueOf(bestScore));
         }
         if (points != null) points.setText(String.valueOf(score));
-        if (best_score != null) best_score.setText(String.valueOf(bestScore));
     }
 
     private void resetScore() {
@@ -406,5 +379,14 @@ public class MainActivity extends AppCompatActivity {
         generateRandomTile();
         updateBoard();
         saveCurrentState();
+    }
+
+    private void checkWin() {
+        for (int i = 0; i < 4; i++)
+            for (int j = 0; j < 4; j++)
+                if (game_board[i][j] == 2048) {
+                    Toast.makeText(context, "Wygrales, stworzyles bloczek o wartosci 2048!", Toast.LENGTH_LONG).show();
+                    return;
+                }
     }
 }

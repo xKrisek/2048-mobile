@@ -1,7 +1,3 @@
-zapisywanie stanu gry;
-
-odczytywanie stanu gry;
-
 lepszy wygląd i UI;
 
 dodanie animacji;
@@ -11,7 +7,5 @@ dodanie dźwięków i muzyki w tle;
 menu pauzy;
 
 ekran główny z opcjami rozpoczęcia nowej gry, wczytania gry i wyjścia;
-
-koniec gry na bloczku 2048;
 
 kolorki;
