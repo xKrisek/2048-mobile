@@ -49,6 +49,7 @@ public class MainActivity extends AppCompatActivity {
     boolean isNewBest = false, isContinued = false;
     private static final String PREFS_NAME = "com.example.a2048_mobile.prefs";
     private static final String PREF_LAST_STATE_JSON = "last_state_json";
+    private static final String PREF_BEST_SCORE_JSON = "best_score_json";
     SharedPreferences prefs;
 
     private static final int SWIPE_THRESHOLD = 100;
@@ -93,6 +94,20 @@ public class MainActivity extends AppCompatActivity {
         GestureDetector gestureDetector = new GestureDetector(this, new SwipeGestureListener());
         game_grid.setOnTouchListener((v, event) -> gestureDetector.onTouchEvent(event));
 
+        if (prefs.contains(PREF_BEST_SCORE_JSON)){
+            String jsonStr = prefs.getString(PREF_BEST_SCORE_JSON, null);
+
+            try {
+                JSONObject state = new JSONObject(jsonStr);
+                bestScore = state.getInt("bestScore");
+
+                if (best_score != null) best_score.setText(String.valueOf(bestScore));
+
+            } catch (JSONException e) {
+                e.printStackTrace();
+                bestScore = 0;
+            }
+        }
         boolean loaded = loadLastState();
         if (!loaded) {
             generateRandomTile();
@@ -138,7 +153,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private int generateRandomTile(){
+    private void generateRandomTile(){
         int random_number = (Math.random() < 0.8) ? 2 : 4;
         int range_x = game_board.length;
         int range_y = game_board[0].length;
@@ -148,7 +163,6 @@ public class MainActivity extends AppCompatActivity {
             random_y = (int)(Math.random() * range_y);
         } while(game_board[random_x][random_y] != 0);
         game_board[random_x][random_y] = random_number;
-        return random_number;
     }
 
     private void onSwipeLeft() {
@@ -379,6 +393,8 @@ public class MainActivity extends AppCompatActivity {
             }
             score = state.getInt("score");
             moves = state.getInt("moves");
+            isContinued = state.getBoolean("isContinued");
+            isNewBest = state.getBoolean("isNewBest");
             bestScore = state.getInt("bestScore");
             if (points != null) points.setText(String.valueOf(score));
             if (moves_count != null) moves_count.setText(String.valueOf(moves));
@@ -402,8 +418,13 @@ public class MainActivity extends AppCompatActivity {
             state.put("board", board);
             state.put("score", score);
             state.put("moves", moves);
-            state.put("bestScore", bestScore);
+            state.put("isContinued", isContinued);
+            state.put("isNewBest", isNewBest);
             prefs.edit().putString(PREF_LAST_STATE_JSON, state.toString()).apply();
+
+            JSONObject state2 = new JSONObject();
+            state2.put("bestScore", bestScore);
+            prefs.edit().putString(PREF_BEST_SCORE_JSON, state2.toString()).apply();
         } catch (JSONException e) {
             e.printStackTrace();
         }
