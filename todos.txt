@@ -4,8 +4,4 @@ dodanie animacji;
 
 dodanie dźwięków i muzyki w tle;
 
-menu pauzy;
-
 ekran główny z opcjami rozpoczęcia nowej gry, wczytania gry i wyjścia;
-
-kolorki;

@@ -1,17 +1,27 @@
 package com.example.a2048_mobile;
 
+import static android.view.View.VISIBLE;
+
+import static java.security.AccessController.getContext;
+
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
+import android.view.View;
+import android.widget.Button;
 import android.widget.GridLayout;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
+import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
@@ -20,6 +30,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
@@ -27,13 +38,15 @@ public class MainActivity extends AppCompatActivity {
     int[][] game_board = new int[4][4];
     int moves = 0;
 
-    TextView blockTemplate, blockNoneTemplate, points, best_score, moves_count;
+    TextView blockTemplate, blockNoneTemplate, points, best_score, moves_count, end_game_your_score, end_game_best_score, end_game_title;
     GridLayout game_grid;
-
     Context context;
+    LinearLayout end_game_overlay;
+    Button continue_button, try_again_button, home_page_button;
 
     int score = 0;
     int bestScore = 0;
+    boolean isNewBest = false, isContinued = false;
     private static final String PREFS_NAME = "com.example.a2048_mobile.prefs";
     private static final String PREF_LAST_STATE_JSON = "last_state_json";
     SharedPreferences prefs;
@@ -64,7 +77,15 @@ public class MainActivity extends AppCompatActivity {
         points = findViewById(R.id.points);
         best_score = findViewById(R.id.best_score);
         moves_count = findViewById(R.id.moves_count);
+        end_game_your_score = findViewById(R.id.end_game_your_score);
+        end_game_best_score = findViewById(R.id.end_game_best_score);
+        continue_button = findViewById(R.id.continue_button);
+        try_again_button = findViewById(R.id.try_again_button);
+        home_page_button = findViewById(R.id.home_page_button);
         context = this;
+        end_game_overlay = findViewById(R.id.end_game_overlay);
+        end_game_title = findViewById(R.id.end_game_title);
+
 
         resetScore();
 
@@ -80,10 +101,16 @@ public class MainActivity extends AppCompatActivity {
             saveCurrentState();
         } else {
             updateBoard();
-            if (isGameOver()) {
-                resetGame();
-            }
         }
+        continue_button.setOnClickListener(v -> {
+            isContinued = true;
+            end_game_overlay.setVisibility(View.GONE);
+        });
+
+        try_again_button.setOnClickListener(v -> {
+            resetGame();
+            end_game_overlay.setVisibility(View.GONE);
+        });
     }
 
     private class SwipeGestureListener extends GestureDetector.SimpleOnGestureListener {
@@ -284,8 +311,16 @@ public class MainActivity extends AppCompatActivity {
         block.setLayoutParams(newLp);
         block.setGravity(blockTemplate.getGravity());
         block.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 36);
-        block.setBackground(blockTemplate.getBackground());
-        block.setTextColor(blockTemplate.getTextColors().getDefaultColor());
+        int colorId = getResources().getIdentifier("tile" + value + "_color", "color", getPackageName());
+        if (colorId == 0) {
+            colorId = R.color.transparent;
+        }
+        Drawable drawable = getResources().getDrawable(R.drawable.rounded_corners, getTheme()).mutate();
+        DrawableCompat.setTint(drawable, getResources().getColor(colorId, getTheme()));
+        block.setBackground(drawable);
+        int colorResId = (Arrays.asList(2, 4, 8, 256, 512, 1024, 32768)).contains(value) ? R.color.black : R.color.white;
+        int color = ContextCompat.getColor(context, colorResId);
+        block.setTextColor(color);
         block.setTypeface(blockTemplate.getTypeface(), blockTemplate.getTypeface().getStyle());
         block.setText(value==0 ? "" : String.valueOf(value));
         grid.addView(block);
@@ -308,7 +343,28 @@ public class MainActivity extends AppCompatActivity {
 
     private void onGameOver() {
         prefs.edit().remove(PREF_LAST_STATE_JSON).apply();
-        Toast.makeText(context, "Game Over! Score: " + score + " Best: " + bestScore, Toast.LENGTH_LONG).show();
+        end_game_overlay.setVisibility(View.VISIBLE);
+        continue_button.setVisibility(View.GONE);
+        end_game_title.setText("GAME OVER");
+        end_game_your_score.setText("Your Score: " + score);
+        end_game_best_score.setTextColor(getResources().getColor(R.color.best_score));
+        if(isNewBest){
+            end_game_best_score.setText("New Best Score!");
+            end_game_best_score.setTextColor(getResources().getColor(R.color.gold));
+            isNewBest = false;
+        }
+        else{
+            end_game_best_score.setText("Best Score: " + bestScore);
+        }
+    }
+
+    private void onGameWon() {
+        end_game_overlay.setVisibility(View.VISIBLE);
+        continue_button.setVisibility(View.VISIBLE);
+        end_game_best_score.setTextColor(getResources().getColor(R.color.best_score));
+        end_game_title.setText("YOU WON");
+        end_game_your_score.setText("You made it to 2048 block!");
+        end_game_best_score.setText("The game is over\nbut you can still continue it");
     }
 
     private boolean loadLastState() {
@@ -358,6 +414,7 @@ public class MainActivity extends AppCompatActivity {
         score += delta;
         if (score > bestScore) {
             bestScore = score;
+            isNewBest = true;
             if (best_score != null) best_score.setText(String.valueOf(bestScore));
         }
         if (points != null) points.setText(String.valueOf(score));
@@ -382,11 +439,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void checkWin() {
-        for (int i = 0; i < 4; i++)
-            for (int j = 0; j < 4; j++)
-                if (game_board[i][j] == 2048) {
-                    Toast.makeText(context, "Wygrales, stworzyles bloczek o wartosci 2048!", Toast.LENGTH_LONG).show();
-                    return;
-                }
+        if(!isContinued){
+            for (int i = 0; i < 4; i++)
+                for (int j = 0; j < 4; j++)
+                    if (game_board[i][j] == 2048) {
+                        onGameWon();
+                        return;
+                    }
+        }
     }
 }
