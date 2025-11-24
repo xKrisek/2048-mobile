@@ -324,7 +324,12 @@ public class MainActivity extends AppCompatActivity {
         }
         block.setLayoutParams(newLp);
         block.setGravity(blockTemplate.getGravity());
-        block.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 36);
+        if(String.valueOf(value).length() >= 5){
+            block.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 20);
+        }
+        else{
+            block.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 36);
+        }
         int colorId = getResources().getIdentifier("tile" + value + "_color", "color", getPackageName());
         if (colorId == 0) {
             colorId = R.color.transparent;
@@ -383,9 +388,12 @@ public class MainActivity extends AppCompatActivity {
 
     private boolean loadLastState() {
         String jsonStr = prefs.getString(PREF_LAST_STATE_JSON, null);
+        String jsonStr2 = prefs.getString(PREF_BEST_SCORE_JSON, null);
+        if (jsonStr2 == null) return false;
         if (jsonStr == null) return false;
         try {
             JSONObject state = new JSONObject(jsonStr);
+            JSONObject state2 = new JSONObject(jsonStr2);
             JSONArray board = state.getJSONArray("board");
             for (int i = 0; i < 4; i++) {
                 JSONArray row = board.getJSONArray(i);
@@ -395,7 +403,7 @@ public class MainActivity extends AppCompatActivity {
             moves = state.getInt("moves");
             isContinued = state.getBoolean("isContinued");
             isNewBest = state.getBoolean("isNewBest");
-            bestScore = state.getInt("bestScore");
+            bestScore = state2.getInt("bestScore");
             if (points != null) points.setText(String.valueOf(score));
             if (moves_count != null) moves_count.setText(String.valueOf(moves));
             if (best_score != null) best_score.setText(String.valueOf(bestScore));
