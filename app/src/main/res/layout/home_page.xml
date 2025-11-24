@@ -2,35 +2,72 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/main"
+    android:id="@+id/main_home_page"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".MainActivity"
     android:background="@color/white"
+    android:orientation="vertical"
     >
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        tools:ignore="MissingConstraints">
 
         <TextView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textSize="96sp"
-            android:textColor="@color/title_color"
-            android:textAlignment="center"
+            android:layout_height="200dp"
+            android:layout_gravity="center"
             android:layout_marginTop="60dp"
+            android:textAlignment="center"
+            android:textColor="@color/title_color"
             android:text="2048"
-            android:textStyle="bold"/>
+            android:textSize="150sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="90dp"/>
 
-        <Button
-            android:id="@+id/play_button"
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/home_continue_button"
+            android:layout_width="300dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="10dp"
+            android:textSize="40sp"
+            android:backgroundTint="@color/tile16384_color"
+            android:text="CONTINUE"
+            android:textStyle="bold"
+            android:textColor="@color/white"
+            app:cornerRadius="8dp"
+            android:visibility="gone"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/home_restart_button"
+            android:layout_width="300dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="10dp"
+            android:textSize="40sp"
+            android:backgroundTint="@color/tile256_color"
+            android:text="RESTART"
+            android:textStyle="bold"
+            android:textColor="@color/white"
+            app:cornerRadius="8dp"
+            android:visibility="gone"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/home_play_button"
             android:layout_width="200dp"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:layout_marginTop="100dp"
-            android:text="Play" />
+            android:layout_marginTop="10dp"
+            android:textSize="40sp"
+            android:backgroundTint="@color/tile8_color"
+            android:text="PLAY"
+            android:textStyle="bold"
+            android:textColor="@color/white"
+            app:cornerRadius="8dp"/>
 
     </LinearLayout>
 

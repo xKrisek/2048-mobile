@@ -1,17 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/main"
+    android:id="@+id/main_game_screen"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".MainActivity"
-    android:background="@color/white">
+    android:background="@color/white"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toTopOf="parent">
+
 
     <LinearLayout
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:gravity="center"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:orientation="vertical"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -50,7 +54,8 @@
             android:layout_height="wrap_content"
             android:background="@color/lightlightgray"
             android:orientation="horizontal"
-            android:paddingVertical="20dp">
+            android:paddingTop="60dp"
+            android:paddingBottom="20dp">
 
             <TextView
                 android:layout_width="0dp"
@@ -148,6 +153,7 @@
             android:layout_width="380dp"
             android:layout_height="380dp"
             android:layout_margin="30dp"
+            android:layout_gravity="center"
             android:background="@drawable/rounded_corners"
             android:backgroundTint="@color/grid_background"
             android:columnCount="4"
@@ -155,6 +161,59 @@
             android:rowCount="4">
 
         </GridLayout>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="150dp"
+        android:background="@color/lightlightgray"
+        android:gravity="bottom|center_horizontal"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+
+        <ImageButton
+            android:id="@+id/nav_home_page_button"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_gravity="top|left"
+            android:layout_margin="20dp"
+            android:src="@drawable/home"
+            android:contentDescription="Home"
+            android:scaleType="centerInside"
+            android:adjustViewBounds="true"
+            android:padding="10dp"
+            android:background="@drawable/rounded_corners"
+            android:backgroundTint="@color/tile8_color"/>
+
+        <ImageButton
+            android:id="@+id/nav_undo_button"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_gravity="top|left"
+            android:layout_margin="20dp"
+            android:src="@drawable/undo"
+            android:contentDescription="Undo"
+            android:scaleType="centerInside"
+            android:adjustViewBounds="true"
+            android:padding="10dp"
+            android:background="@drawable/rounded_corners"
+            android:backgroundTint="@color/tile16384_color"/>
+
+        <ImageButton
+            android:id="@+id/nav_restart_button"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_gravity="top|left"
+            android:layout_margin="20dp"
+            android:src="@drawable/restart"
+            android:contentDescription="Restart"
+            android:scaleType="centerInside"
+            android:adjustViewBounds="true"
+            android:padding="10dp"
+            android:background="@drawable/rounded_corners"
+            android:backgroundTint="@color/tile256_color"/>
 
     </LinearLayout>
 

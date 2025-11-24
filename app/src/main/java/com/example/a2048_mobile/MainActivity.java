@@ -1,8 +1,7 @@
+// java
 package com.example.a2048_mobile;
 
 import static android.view.View.VISIBLE;
-
-import static java.security.AccessController.getContext;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -13,6 +12,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.GridLayout;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -36,17 +36,22 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
 
     int[][] game_board = new int[4][4];
+    int[][] game_board_clone = game_board.clone();
     int moves = 0;
 
     TextView blockTemplate, blockNoneTemplate, points, best_score, moves_count, end_game_your_score, end_game_best_score, end_game_title;
     GridLayout game_grid;
     Context context;
     LinearLayout end_game_overlay;
-    Button continue_button, try_again_button, home_page_button;
+    Button continue_button, try_again_button, home_page_button, home_play_button, home_restart_button, home_continue_button;
+    ImageButton nav_home_page_button, nav_undo_button, nav_restart_button;
 
+    private final List<String> undoStack = new ArrayList<>();
     int score = 0;
+    int score_clone = score;
     int bestScore = 0;
-    boolean isNewBest = false, isContinued = false;
+    int bestScore_clone = bestScore;
+    boolean isNewBest = false, isContinued = false, isUndo = false;
     private static final String PREFS_NAME = "com.example.a2048_mobile.prefs";
     private static final String PREF_LAST_STATE_JSON = "last_state_json";
     private static final String PREF_BEST_SCORE_JSON = "best_score_json";
@@ -59,15 +64,57 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.home_page);
 
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main_home_page), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
 
         prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+
+        home_play_button = findViewById(R.id.home_play_button);
+        home_continue_button = findViewById(R.id.home_continue_button);
+        home_restart_button = findViewById(R.id.home_restart_button);
+
+        boolean loaded = loadLastState();
+        if (loaded) {
+            if (home_play_button != null) home_play_button.setVisibility(View.GONE);
+            if (home_continue_button != null) home_continue_button.setVisibility(View.VISIBLE);
+            if (home_restart_button != null) home_restart_button.setVisibility(View.VISIBLE);
+        }
+
+        if (home_play_button != null) {
+            home_play_button.setOnClickListener(v -> {
+                setContentView(R.layout.game_screen);
+                initGame();
+            });
+        }
+        if (home_continue_button != null) {
+            home_continue_button.setOnClickListener(v -> {
+                setContentView(R.layout.game_screen);
+                initGame();
+            });
+        }
+        if (home_restart_button != null) {
+            home_restart_button.setOnClickListener(v -> {
+                setContentView(R.layout.game_screen);
+                initGame();
+                resetGame();
+            });
+        }
+    }
+
+    private void initGame() {
+        View root = findViewById(R.id.main_game_screen);
+        if (root != null) {
+            ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
+                Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+                v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+                return insets;
+            });
+        }
 
         for(int i = 0; i < 4; i++)
             for(int j = 0; j < 4; j++)
@@ -86,13 +133,17 @@ public class MainActivity extends AppCompatActivity {
         context = this;
         end_game_overlay = findViewById(R.id.end_game_overlay);
         end_game_title = findViewById(R.id.end_game_title);
-
+        nav_home_page_button = findViewById(R.id.nav_home_page_button);
+        nav_undo_button = findViewById(R.id.nav_undo_button);
+        nav_restart_button = findViewById(R.id.nav_restart_button);
 
         resetScore();
 
         game_grid = findViewById(R.id.game_grid);
         GestureDetector gestureDetector = new GestureDetector(this, new SwipeGestureListener());
-        game_grid.setOnTouchListener((v, event) -> gestureDetector.onTouchEvent(event));
+        if (game_grid != null) {
+            game_grid.setOnTouchListener((v, event) -> gestureDetector.onTouchEvent(event));
+        }
 
         if (prefs.contains(PREF_BEST_SCORE_JSON)){
             String jsonStr = prefs.getString(PREF_BEST_SCORE_JSON, null);
@@ -108,6 +159,7 @@ public class MainActivity extends AppCompatActivity {
                 bestScore = 0;
             }
         }
+
         boolean loaded = loadLastState();
         if (!loaded) {
             generateRandomTile();
@@ -117,6 +169,7 @@ public class MainActivity extends AppCompatActivity {
         } else {
             updateBoard();
         }
+
         continue_button.setOnClickListener(v -> {
             isContinued = true;
             end_game_overlay.setVisibility(View.GONE);
@@ -126,6 +179,64 @@ public class MainActivity extends AppCompatActivity {
             resetGame();
             end_game_overlay.setVisibility(View.GONE);
         });
+
+        home_page_button.setOnClickListener(v -> {
+            recreate();
+        });
+        nav_home_page_button.setOnClickListener(v -> {
+            recreate();
+        });
+        nav_undo_button.setOnClickListener(v -> undoLastMove());
+        nav_restart_button.setOnClickListener(v -> resetGame());
+    }
+
+    private void pushStateToUndoStack() {
+        try {
+            JSONObject state = new JSONObject();
+            JSONArray board = new JSONArray();
+            for (int i = 0; i < 4; i++) {
+                JSONArray row = new JSONArray();
+                for (int j = 0; j < 4; j++) row.put(game_board[i][j]);
+                board.put(row);
+            }
+            state.put("board", board);
+            state.put("score", score);
+            state.put("moves", moves);
+            state.put("isContinued", isContinued);
+            state.put("isNewBest", isNewBest);
+            undoStack.add(state.toString());
+            if (undoStack.size() > 1) undoStack.remove(0);
+            if (nav_undo_button != null) nav_undo_button.setEnabled(true);
+        } catch (JSONException ignored) {}
+    }
+
+    private void undoLastMove() {
+        if (undoStack.isEmpty()) {
+            Toast.makeText(this, "Brak ruchów do cofnięcia", Toast.LENGTH_SHORT).show();
+            if (nav_undo_button != null) nav_undo_button.setEnabled(false);
+            return;
+        }
+        String jsonStr = undoStack.remove(undoStack.size() - 1);
+        try {
+            JSONObject state = new JSONObject(jsonStr);
+            JSONArray board = state.getJSONArray("board");
+            for (int i = 0; i < 4; i++) {
+                JSONArray row = board.getJSONArray(i);
+                for (int j = 0; j < 4; j++) game_board[i][j] = row.getInt(j);
+            }
+            score = state.getInt("score");
+            moves = state.getInt("moves");
+            isContinued = state.getBoolean("isContinued");
+            isNewBest = state.getBoolean("isNewBest");
+            if (points != null) points.setText(String.valueOf(score));
+            if (moves_count != null) moves_count.setText(String.valueOf(moves));
+            if (best_score != null) best_score.setText(String.valueOf(bestScore));
+            updateBoard();
+            saveCurrentState();
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        if (undoStack.isEmpty() && nav_undo_button != null) nav_undo_button.setEnabled(false);
     }
 
     private class SwipeGestureListener extends GestureDetector.SimpleOnGestureListener {
@@ -166,6 +277,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void onSwipeLeft() {
+        pushStateToUndoStack();
         boolean changed = false;
         for (int i = 0; i < game_board.length; i++) {
             int[] original = java.util.Arrays.copyOf(game_board[i], game_board[i].length);
@@ -193,10 +305,14 @@ public class MainActivity extends AppCompatActivity {
                 saveCurrentState();
                 checkWin();
             }
+        } else {
+            if (!undoStack.isEmpty()) undoStack.remove(undoStack.size() - 1);
         }
+        if (undoStack.isEmpty() && nav_undo_button != null) nav_undo_button.setEnabled(false);
     }
 
     private void onSwipeRight() {
+        pushStateToUndoStack();
         boolean changed = false;
         for (int i = 0; i < game_board.length; i++) {
             int[] original = java.util.Arrays.copyOf(game_board[i], game_board[i].length);
@@ -225,10 +341,14 @@ public class MainActivity extends AppCompatActivity {
                 saveCurrentState();
                 checkWin();
             }
+        } else {
+            if (!undoStack.isEmpty()) undoStack.remove(undoStack.size() - 1);
         }
+        if (undoStack.isEmpty() && nav_undo_button != null) nav_undo_button.setEnabled(false);
     }
 
     private void onSwipeUp() {
+        pushStateToUndoStack();
         boolean changed = false;
         for (int j = 0; j < game_board.length; j++) {
             int[] originalColumn = new int[game_board.length];
@@ -257,10 +377,14 @@ public class MainActivity extends AppCompatActivity {
                 saveCurrentState();
                 checkWin();
             }
+        } else {
+            if (!undoStack.isEmpty()) undoStack.remove(undoStack.size() - 1);
         }
+        if (undoStack.isEmpty() && nav_undo_button != null) nav_undo_button.setEnabled(false);
     }
 
     private void onSwipeDown() {
+        pushStateToUndoStack();
         boolean changed = false;
         for (int j = 0; j < game_board.length; j++) {
             int[] originalColumn = new int[game_board.length];
@@ -290,10 +414,14 @@ public class MainActivity extends AppCompatActivity {
                 saveCurrentState();
                 checkWin();
             }
+        } else {
+            if (!undoStack.isEmpty()) undoStack.remove(undoStack.size() - 1);
         }
+        if (undoStack.isEmpty() && nav_undo_button != null) nav_undo_button.setEnabled(false);
     }
 
     public void updateBoard() {
+        if (game_grid == null) return;
         game_grid.removeAllViews();
         game_grid.setColumnCount(4);
         game_grid.setRowCount(4);
@@ -337,12 +465,12 @@ public class MainActivity extends AppCompatActivity {
         Drawable drawable = getResources().getDrawable(R.drawable.rounded_corners, getTheme()).mutate();
         DrawableCompat.setTint(drawable, getResources().getColor(colorId, getTheme()));
         block.setBackground(drawable);
-        int colorResId = (Arrays.asList(2, 4, 8, 256, 512, 1024, 32768)).contains(value) ? R.color.black : R.color.white;
+        int colorResId = (Arrays.asList(2, 4, 256, 512, 1024, 32768)).contains(value) ? R.color.black : R.color.white;
         int color = ContextCompat.getColor(context, colorResId);
         block.setTextColor(color);
         block.setTypeface(blockTemplate.getTypeface(), blockTemplate.getTypeface().getStyle());
         block.setText(value==0 ? "" : String.valueOf(value));
-        grid.addView(block);
+        if (grid != null) grid.addView(block);
     }
 
     private int dpToPx(int dp) {
@@ -362,38 +490,37 @@ public class MainActivity extends AppCompatActivity {
 
     private void onGameOver() {
         prefs.edit().remove(PREF_LAST_STATE_JSON).apply();
-        end_game_overlay.setVisibility(View.VISIBLE);
-        continue_button.setVisibility(View.GONE);
-        end_game_title.setText("GAME OVER");
-        end_game_your_score.setText("Your Score: " + score);
-        end_game_best_score.setTextColor(getResources().getColor(R.color.best_score));
-        if(isNewBest){
-            end_game_best_score.setText("New Best Score!");
-            end_game_best_score.setTextColor(getResources().getColor(R.color.gold));
-            isNewBest = false;
-        }
-        else{
-            end_game_best_score.setText("Best Score: " + bestScore);
+        if (end_game_overlay != null) end_game_overlay.setVisibility(View.VISIBLE);
+        if (continue_button != null) continue_button.setVisibility(View.GONE);
+        if (end_game_title != null) end_game_title.setText("GAME OVER");
+        if (end_game_your_score != null) end_game_your_score.setText("Your Score: " + score);
+        if (end_game_best_score != null) {
+            end_game_best_score.setTextColor(getResources().getColor(R.color.best_score));
+            if(isNewBest){
+                end_game_best_score.setText("New Best Score!");
+                end_game_best_score.setTextColor(getResources().getColor(R.color.gold));
+                isNewBest = false;
+            }
+            else{
+                end_game_best_score.setText("Best Score: " + bestScore);
+            }
         }
     }
 
     private void onGameWon() {
-        end_game_overlay.setVisibility(View.VISIBLE);
-        continue_button.setVisibility(View.VISIBLE);
-        end_game_best_score.setTextColor(getResources().getColor(R.color.best_score));
-        end_game_title.setText("YOU WON");
-        end_game_your_score.setText("You made it to 2048 block!");
-        end_game_best_score.setText("The game is over\nbut you can still continue it");
+        if (end_game_overlay != null) end_game_overlay.setVisibility(View.VISIBLE);
+        if (continue_button != null) continue_button.setVisibility(View.VISIBLE);
+        if (end_game_best_score != null) end_game_best_score.setTextColor(getResources().getColor(R.color.best_score));
+        if (end_game_title != null) end_game_title.setText("YOU WON");
+        if (end_game_your_score != null) end_game_your_score.setText("You made it to 2048 block!");
+        if (end_game_best_score != null) end_game_best_score.setText("The game is over\nbut you can still continue it");
     }
 
     private boolean loadLastState() {
         String jsonStr = prefs.getString(PREF_LAST_STATE_JSON, null);
-        String jsonStr2 = prefs.getString(PREF_BEST_SCORE_JSON, null);
-        if (jsonStr2 == null) return false;
         if (jsonStr == null) return false;
         try {
             JSONObject state = new JSONObject(jsonStr);
-            JSONObject state2 = new JSONObject(jsonStr2);
             JSONArray board = state.getJSONArray("board");
             for (int i = 0; i < 4; i++) {
                 JSONArray row = board.getJSONArray(i);
@@ -401,12 +528,27 @@ public class MainActivity extends AppCompatActivity {
             }
             score = state.getInt("score");
             moves = state.getInt("moves");
-            isContinued = state.getBoolean("isContinued");
-            isNewBest = state.getBoolean("isNewBest");
-            bestScore = state2.getInt("bestScore");
+            isContinued = state.optBoolean("isContinued", false);
+            isNewBest = state.optBoolean("isNewBest", false);
+            isUndo = state.optBoolean("isUndo", false);
             if (points != null) points.setText(String.valueOf(score));
             if (moves_count != null) moves_count.setText(String.valueOf(moves));
-            if (best_score != null) best_score.setText(String.valueOf(bestScore));
+
+            undoStack.clear();
+            JSONArray undoArray = state.optJSONArray("undoStack");
+            if (undoArray != null) {
+                for (int i = 0; i < undoArray.length(); i++) {
+                    try {
+                        Object item = undoArray.get(i);
+                        if (item instanceof JSONObject) {
+                            undoStack.add(((JSONObject) item).toString());
+                        } else {
+                            undoStack.add(String.valueOf(item));
+                        }
+                    } catch (JSONException e) {}
+                }
+            }
+            if (nav_undo_button != null) nav_undo_button.setEnabled(!undoStack.isEmpty());
             return true;
         } catch (JSONException e) {
             e.printStackTrace();
@@ -428,6 +570,18 @@ public class MainActivity extends AppCompatActivity {
             state.put("moves", moves);
             state.put("isContinued", isContinued);
             state.put("isNewBest", isNewBest);
+            state.put("isUndo", isUndo);
+
+            JSONArray undoArray = new JSONArray();
+            for (String s : undoStack) {
+                try {
+                    undoArray.put(new JSONObject(s));
+                } catch (JSONException ex) {
+                    undoArray.put(s);
+                }
+            }
+            state.put("undoStack", undoArray);
+
             prefs.edit().putString(PREF_LAST_STATE_JSON, state.toString()).apply();
 
             JSONObject state2 = new JSONObject();
@@ -440,8 +594,10 @@ public class MainActivity extends AppCompatActivity {
 
     private void addToScore(int delta) {
         if (delta <= 0) return;
+        score_clone = score;
         score += delta;
         if (score > bestScore) {
+            bestScore_clone = bestScore;
             bestScore = score;
             isNewBest = true;
             if (best_score != null) best_score.setText(String.valueOf(bestScore));
