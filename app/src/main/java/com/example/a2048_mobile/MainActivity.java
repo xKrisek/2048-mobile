@@ -59,6 +59,7 @@ public class MainActivity extends AppCompatActivity {
 
     private static final int SWIPE_THRESHOLD = 100;
     private static final int SWIPE_VELOCITY_THRESHOLD = 100;
+    private static final int MAX_UNDO = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -282,9 +283,28 @@ public class MainActivity extends AppCompatActivity {
         } while(game_board[random_x][random_y] != 0);
         game_board[random_x][random_y] = random_number;
     }
-
+    private String currentStateHelp() {
+        try {
+            JSONObject state = new JSONObject();
+            JSONArray board = new JSONArray();
+            for (int i = 0; i < 4; i++) {
+                JSONArray row = new JSONArray();
+                for (int j = 0; j < 4; j++) row.put(game_board[i][j]);
+                board.put(row);
+            }
+            state.put("board", board);
+            state.put("score", score);
+            state.put("moves", moves);
+            state.put("isContinued", isContinued);
+            state.put("isNewBest", isNewBest);
+            return state.toString();
+        } catch (JSONException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
     private void onSwipeLeft() {
-        pushStateToUndoStack();
+        String preState = currentStateHelp();
         boolean changed = false;
         for (int i = 0; i < game_board.length; i++) {
             int[] original = java.util.Arrays.copyOf(game_board[i], game_board[i].length);
@@ -304,6 +324,11 @@ public class MainActivity extends AppCompatActivity {
             if (!java.util.Arrays.equals(game_board[i], original)) changed = true;
         }
         if (changed) {
+            if (preState != null) {
+                undoStack.add(preState);
+                while (undoStack.size() > MAX_UNDO) undoStack.remove(0);
+                if (nav_undo_button != null) nav_undo_button.setEnabled(true);
+            }
             generateRandomTile();
             updateBoard();
             moves++;
@@ -312,14 +337,28 @@ public class MainActivity extends AppCompatActivity {
                 saveCurrentState();
                 checkWin();
             }
-        } else {
-            if (!undoStack.isEmpty()) undoStack.remove(undoStack.size() - 1);
         }
         if (undoStack.isEmpty() && nav_undo_button != null) nav_undo_button.setEnabled(false);
     }
 
+    /*// helper
+private void pushStateToUndoStack(String stateJson) {
+    if (stateJson == null) return;
+    undoStack.add(stateJson);
+    while (undoStack.size() > MAX_UNDO) undoStack.remove(0);
+    if (nav_undo_button != null) nav_undo_button.setEnabled(true);
+}
+    
+
+String preState = serializeCurrentState();
+// wykonujesz ruch (modyfikujesz game_board)
+if (changed) {
+    pushStateToUndoStack(preState);
+    // dalsza logika: generateRandomTile(), updateBoard(), saveCurrentState()...
+}*/
+
     private void onSwipeRight() {
-        pushStateToUndoStack();
+        String preState = currentStateHelp();
         boolean changed = false;
         for (int i = 0; i < game_board.length; i++) {
             int[] original = java.util.Arrays.copyOf(game_board[i], game_board[i].length);
@@ -340,6 +379,11 @@ public class MainActivity extends AppCompatActivity {
             if (!java.util.Arrays.equals(game_board[i], original)) changed = true;
         }
         if (changed) {
+            if (preState != null) {
+                undoStack.add(preState);
+                while (undoStack.size() > MAX_UNDO) undoStack.remove(0);
+                if (nav_undo_button != null) nav_undo_button.setEnabled(true);
+            }
             generateRandomTile();
             updateBoard();
             moves++;
@@ -348,14 +392,12 @@ public class MainActivity extends AppCompatActivity {
                 saveCurrentState();
                 checkWin();
             }
-        } else {
-            if (!undoStack.isEmpty()) undoStack.remove(undoStack.size() - 1);
         }
         if (undoStack.isEmpty() && nav_undo_button != null) nav_undo_button.setEnabled(false);
     }
 
     private void onSwipeUp() {
-        pushStateToUndoStack();
+        String preState = currentStateHelp();
         boolean changed = false;
         for (int j = 0; j < game_board.length; j++) {
             int[] originalColumn = new int[game_board.length];
@@ -376,6 +418,11 @@ public class MainActivity extends AppCompatActivity {
             if (!java.util.Arrays.equals(newColumn, originalColumn)) changed = true;
         }
         if (changed) {
+            if (preState != null) {
+                undoStack.add(preState);
+                while (undoStack.size() > MAX_UNDO) undoStack.remove(0);
+                if (nav_undo_button != null) nav_undo_button.setEnabled(true);
+            }
             generateRandomTile();
             updateBoard();
             moves++;
@@ -384,14 +431,12 @@ public class MainActivity extends AppCompatActivity {
                 saveCurrentState();
                 checkWin();
             }
-        } else {
-            if (!undoStack.isEmpty()) undoStack.remove(undoStack.size() - 1);
         }
         if (undoStack.isEmpty() && nav_undo_button != null) nav_undo_button.setEnabled(false);
     }
 
     private void onSwipeDown() {
-        pushStateToUndoStack();
+        String preState = currentStateHelp();
         boolean changed = false;
         for (int j = 0; j < game_board.length; j++) {
             int[] originalColumn = new int[game_board.length];
@@ -413,6 +458,11 @@ public class MainActivity extends AppCompatActivity {
             if (!java.util.Arrays.equals(newColumn, originalColumn)) changed = true;
         }
         if (changed) {
+            if (preState != null) {
+                undoStack.add(preState);
+                while (undoStack.size() > MAX_UNDO) undoStack.remove(0);
+                if (nav_undo_button != null) nav_undo_button.setEnabled(true);
+            }
             generateRandomTile();
             updateBoard();
             moves++;
@@ -421,8 +471,6 @@ public class MainActivity extends AppCompatActivity {
                 saveCurrentState();
                 checkWin();
             }
-        } else {
-            if (!undoStack.isEmpty()) undoStack.remove(undoStack.size() - 1);
         }
         if (undoStack.isEmpty() && nav_undo_button != null) nav_undo_button.setEnabled(false);
     }
