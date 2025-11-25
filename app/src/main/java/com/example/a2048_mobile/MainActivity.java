@@ -6,6 +6,7 @@ import static android.view.View.VISIBLE;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.drawable.Drawable;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
@@ -60,7 +61,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int SWIPE_THRESHOLD = 100;
     private static final int SWIPE_VELOCITY_THRESHOLD = 100;
     private static final int MAX_UNDO = 1;
-
+    MediaPlayer pop;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -78,6 +79,8 @@ public class MainActivity extends AppCompatActivity {
         home_play_button = findViewById(R.id.home_play_button);
         home_continue_button = findViewById(R.id.home_continue_button);
         home_restart_button = findViewById(R.id.home_restart_button);
+
+        MediaPlayer pop = MediaPlayer.create(MainActivity.this, R.raw.pop);
 
         boolean loaded = loadLastState();
         if (loaded) {
@@ -316,6 +319,7 @@ public class MainActivity extends AppCompatActivity {
                     compressed.set(j, merged);
                     compressed.remove(j + 1);
                     addToScore(merged);
+                    pop.start();
                 }
             }
             while (compressed.size() < 4) compressed.add(0);
@@ -341,22 +345,6 @@ public class MainActivity extends AppCompatActivity {
         if (undoStack.isEmpty() && nav_undo_button != null) nav_undo_button.setEnabled(false);
     }
 
-    /*// helper
-private void pushStateToUndoStack(String stateJson) {
-    if (stateJson == null) return;
-    undoStack.add(stateJson);
-    while (undoStack.size() > MAX_UNDO) undoStack.remove(0);
-    if (nav_undo_button != null) nav_undo_button.setEnabled(true);
-}
-    
-
-String preState = serializeCurrentState();
-// wykonujesz ruch (modyfikujesz game_board)
-if (changed) {
-    pushStateToUndoStack(preState);
-    // dalsza logika: generateRandomTile(), updateBoard(), saveCurrentState()...
-}*/
-
     private void onSwipeRight() {
         String preState = currentStateHelp();
         boolean changed = false;
@@ -370,6 +358,7 @@ if (changed) {
                     compressed.set(j, merged);
                     compressed.remove(j - 1);
                     addToScore(merged);
+                    pop.start();
                     j-=1;
                 }
             }
@@ -410,6 +399,7 @@ if (changed) {
                     compressed.set(i, merged);
                     compressed.remove(i + 1);
                     addToScore(merged);
+                    pop.start();
                 }
             }
             while (compressed.size() < 4) compressed.add(0);
@@ -449,6 +439,7 @@ if (changed) {
                     compressed.set(i, merged);
                     compressed.remove(i - 1);
                     addToScore(merged);
+                    pop.start();
                     i--;
                 }
             }
