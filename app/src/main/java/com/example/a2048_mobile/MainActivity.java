@@ -457,7 +457,6 @@ public class MainActivity extends AppCompatActivity {
         }
         if (undoStack.isEmpty() && nav_undo_button != null) nav_undo_button.setEnabled(false);
     }
-    //eoeo
     public void updateBoard() {
         if (game_grid == null) return;
         game_grid.removeAllViews();
