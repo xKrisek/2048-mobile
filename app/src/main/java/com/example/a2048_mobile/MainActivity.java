@@ -309,6 +309,7 @@ public class MainActivity extends AppCompatActivity {
     private void onSwipeLeft() {
         String preState = currentStateHelp();
         boolean changed = false;
+        boolean mergedBlocks = false;
         for (int i = 0; i < game_board.length; i++) {
             int[] original = java.util.Arrays.copyOf(game_board[i], game_board[i].length);
             List<Integer> compressed = new ArrayList<>();
@@ -319,6 +320,7 @@ public class MainActivity extends AppCompatActivity {
                     compressed.set(j, merged);
                     compressed.remove(j + 1);
                     addToScore(merged);
+                    mergedBlocks = true;
                     pop.start();
                 }
             }
@@ -343,11 +345,15 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         if (undoStack.isEmpty() && nav_undo_button != null) nav_undo_button.setEnabled(false);
+        if (mergedBlocks){
+            pop.start();
+        }
     }
 
     private void onSwipeRight() {
         String preState = currentStateHelp();
         boolean changed = false;
+        boolean mergedBlocks = false;
         for (int i = 0; i < game_board.length; i++) {
             int[] original = java.util.Arrays.copyOf(game_board[i], game_board[i].length);
             List<Integer> compressed = new ArrayList<>();
@@ -358,6 +364,7 @@ public class MainActivity extends AppCompatActivity {
                     compressed.set(j, merged);
                     compressed.remove(j - 1);
                     addToScore(merged);
+                    mergedBlocks = true;
                     pop.start();
                     j-=1;
                 }
@@ -383,11 +390,15 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         if (undoStack.isEmpty() && nav_undo_button != null) nav_undo_button.setEnabled(false);
+        if (mergedBlocks){
+            pop.start();
+        }
     }
 
     private void onSwipeUp() {
         String preState = currentStateHelp();
         boolean changed = false;
+        boolean mergedBlocks = false;
         for (int j = 0; j < game_board.length; j++) {
             int[] originalColumn = new int[game_board.length];
             for(int i = 0; i < game_board.length; i++) originalColumn[i] = game_board[i][j];
@@ -399,6 +410,7 @@ public class MainActivity extends AppCompatActivity {
                     compressed.set(i, merged);
                     compressed.remove(i + 1);
                     addToScore(merged);
+                    mergedBlocks = true;
                     pop.start();
                 }
             }
@@ -423,11 +435,15 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         if (undoStack.isEmpty() && nav_undo_button != null) nav_undo_button.setEnabled(false);
+        if (mergedBlocks){
+            pop.start();
+        }
     }
 
     private void onSwipeDown() {
         String preState = currentStateHelp();
         boolean changed = false;
+        boolean mergedBlocks = false;
         for (int j = 0; j < game_board.length; j++) {
             int[] originalColumn = new int[game_board.length];
             for(int i = 0; i < game_board.length; i++) originalColumn[i] = game_board[i][j];
@@ -439,7 +455,7 @@ public class MainActivity extends AppCompatActivity {
                     compressed.set(i, merged);
                     compressed.remove(i - 1);
                     addToScore(merged);
-                    pop.start();
+                    mergedBlocks = true;
                     i--;
                 }
             }
@@ -464,6 +480,9 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         if (undoStack.isEmpty() && nav_undo_button != null) nav_undo_button.setEnabled(false);
+        if (mergedBlocks){
+            pop.start();
+        }
     }
 
     public void updateBoard() {
