@@ -137,6 +137,10 @@ public class MainActivity extends AppCompatActivity {
         nav_undo_button = findViewById(R.id.nav_undo_button);
         nav_restart_button = findViewById(R.id.nav_restart_button);
 
+        nav_home_page_button.setEnabled(true);
+        nav_undo_button.setEnabled(true);
+        nav_restart_button.setEnabled(true);
+
         resetScore();
 
         game_grid = findViewById(R.id.game_grid);
@@ -172,6 +176,9 @@ public class MainActivity extends AppCompatActivity {
 
         continue_button.setOnClickListener(v -> {
             isContinued = true;
+            nav_home_page_button.setEnabled(true);
+            nav_undo_button.setEnabled(true);
+            nav_restart_button.setEnabled(true);
             end_game_overlay.setVisibility(View.GONE);
         });
 
@@ -490,6 +497,9 @@ public class MainActivity extends AppCompatActivity {
 
     private void onGameOver() {
         prefs.edit().remove(PREF_LAST_STATE_JSON).apply();
+        nav_home_page_button.setEnabled(false);
+        nav_undo_button.setEnabled(false);
+        nav_restart_button.setEnabled(false);
         if (end_game_overlay != null) end_game_overlay.setVisibility(View.VISIBLE);
         if (continue_button != null) continue_button.setVisibility(View.GONE);
         if (end_game_title != null) end_game_title.setText("GAME OVER");
@@ -514,6 +524,9 @@ public class MainActivity extends AppCompatActivity {
         if (end_game_title != null) end_game_title.setText("YOU WON");
         if (end_game_your_score != null) end_game_your_score.setText("You made it to 2048 block!");
         if (end_game_best_score != null) end_game_best_score.setText("The game is over\nbut you can still continue it");
+        nav_home_page_button.setEnabled(false);
+        nav_undo_button.setEnabled(false);
+        nav_restart_button.setEnabled(false);
     }
 
     private boolean loadLastState() {
